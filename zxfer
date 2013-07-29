@@ -1,6 +1,7 @@
 #!/bin/sh
 # BSD HEADER START
 
+# Copyright (c) 2013 Allan Jude <freebsd@allanjude.com>
 # Copyright (c) 2010,2011 Ivan Nash Dreckman
 # Copyright (c) 2007, 2008 Constantin Gonzalez
 # All rights reserved.
@@ -81,6 +82,7 @@
 #
 #     zxfer [-dFnPsv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
 #           [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
+#           [-D 'progress dialog options']
 #           [-T user@host] [-o option1=value1,option2=value2...] [-g days]
 #           destination
 #     zxfer {-S} [-dilpPnv] [-k | -e] [-b | -B] [-f /path/to/rsfile]
@@ -92,12 +94,13 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="0.9.9"
+zxfer_version="0.9.9-20130728"
 
 # Default values
 option_b=0
 option_B=0
 option_d=0
+option_D=""
 option_e=0
 option_E=""
 option_f=""
@@ -253,6 +256,7 @@ cat <<EOT
 usage: 
      zxfer [-dFnPsv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
            [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
+           [-D 'progress dialog options']
            [-T user@host] [-o option1=value1,option2=value2...] [-g days]
            destination
      zxfer {-S} [-dilpPnv] [-k | -e] [-b | -B] [-f /path/to/rsfile]
@@ -395,19 +399,61 @@ copy_snap() {
   if [ -z "`echo "$rzfs_list_ho_s" | grep ^$dest/$copysrctail`" ]; then
     echov "Sending $copysrc to $copydest."
     if [ "$copyprev" = "" ]; then
-      if [ $option_n -eq 0 ]; then
-        $LZFS send $copysrc | $RZFS receive $option_F $copydest || \
-          { echo "Error when zfs send/receiving."; beep; exit 1; }
+      if [ "$option_D" != "" ]; then
+        if [ $option_n -eq 0 ]; then
+          SIZE_EST=`$LZFS send -nPv $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2`
+          PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
+            sed s#%%title%%#$copysrc#g`
+          $LZFS send $copysrc | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG | \
+            $RZFS receive $option_F $copydest || \
+            { echo "Error when zfs send/receiving."; beep; exit 1; }
+        else
+          SIZE_EST=`$LZFS send -nPv $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2`
+          PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
+            sed s#%%title%%#$copysrc#g`
+          $LZFS send -nv $copysrc
+          echo "$LZFS send $copysrc | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG | \
+            $RZFS receive $option_F $copydest"
+        fi
       else
-        echo "$LZFS send $copysrc | $RZFS receive $option_F $copydest"
+        if [ $option_n -eq 0 ]; then
+          $LZFS send $copysrc | $RZFS receive $option_F $copydest || \
+            { echo "Error when zfs send/receiving."; beep; exit 1; }        
+        else
+          $LZFS send -nv $copysrc
+          echo "$LZFS send $copysrc | $RZFS receive $option_F $copydest"
+        fi
       fi
     else
       echov "  (incremental to $copyprev.)"
-      if [ $option_n -eq 0 ]; then
-        $LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest || \
-          { echo "Error when zfs send/receiving."; beep; exit 1; }
+      if [ "$option_D" != "" ]; then
+        if [ $option_n -eq 0 ]; then
+          SIZE_EST=`$LZFS send -nPv -i $copyprev $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2`
+          PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
+            sed s#%%title%%#$copysrc#g`
+          $LZFS send -i $copyprev $copysrc | dd obs=1m | dd bs=1m | \
+            $PROGRESS_DIALOG | $RZFS receive $option_F $copydest || \
+            { echo "Error when zfs send/receiving."; beep; exit 1; }        
+        else
+          SIZE_EST=`$LZFS send -nPv -i $copyprev $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2`
+          PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
+            sed s#%%title%%#$copysrc#g`
+          $LZFS send -nv -i $copyprev $copysrc
+          echo "$LZFS send -i $copyprev $copysrc | dd obs=1m | dd bs=1m | \
+            $PROGRESS_DIALOG | $RZFS receive $option_F $copydest"      
+        fi
       else
-        echo "$LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest"
+        if [ $option_n -eq 0 ]; then
+          $LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest || \
+            { echo "Error when zfs send/receiving."; beep; exit 1; }
+        else
+          $LZFS send -nv -i $copyprev $copysrc
+          echo "$LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest"
+        fi
       fi
     fi
   fi
@@ -1633,7 +1679,7 @@ $backup_file_dir/$backup_file_extension.$is_tail\" | $option_T sh"
 #
 
 # Read command line switches
-while getopts bBc:deE:f:Fg:hiklL:lmnN:o:O:pPPR:sST:u:v?: i
+while getopts bBc:deE:f:Fg:hiklL:lmnN:o:O:pPPR:sST:u:v?:D: i
 do
   case $i in
     b)
@@ -1647,6 +1693,9 @@ do
       ;;
     d)
       option_d=1
+      ;;
+    D)
+      option_D="$OPTARG"
       ;;
     e)
       option_e=1
