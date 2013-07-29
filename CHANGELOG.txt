@@ -1,0 +1,117 @@
+CHANGELOG
+=========
+20110513 ver 0.9.9
+           -Fixed a small but showstopping bug in Solaris that wasn't showing
+	     up in FreeBSD. Thanks predrag....@googlemail.com. Because this
+	     is the only fix and is not affecting FreeBSD, I may not update
+	     the port until the next version.
+20110510 ver 0.9.8
+           -Added -c option to default rsync options list. Note that this
+	     much increases reliability of backups, at the expense of speed.
+	   -Removed --del option when transferring single files with -N.
+           -Fixed bug in rsync transfer, where --del option caused
+	     attempted deletes of filesystem mountpoints on destination.
+           -Made the grandfather protection option check everything BEFORE
+	     any deletions would occur. If grandfathers are being deleted,
+	     chances are something is wrong, so better to fail before doing
+	     damage.
+	   -Added a "p" switch to persist in face of rsync errors. Needed
+	     for a full system restore.
+	   -Added an "E" to enable passing of excludes to rsync (useful
+	     for avoiding transfer of zpool.cache)
+	   -Added an "i" option to enable inclusion of filesystem mountpoints
+	     on the destination in -S mode, as they needed to be excluded
+	     by default.
+	     If they aren't excluded then --del will wipe anything there,
+	     e.g. contents from a filesystem from another pool.
+20110407 ver 0.9.7
+           -Removed the extra backup related content from the man page
+             as more suitable for external documentation. KISS.
+	   -Added in a "grandfather protection" option [-g], to prevent
+	     grandfather snapshots being deleted inadvertently.
+20110405   -Again, added to and modified the man page significantly, to
+              explain tape vs HDD backup.
+20110404   -Made zxfer more portable, by testing for the actual $PATH via
+             "which" instead of guessing which directories the programs might
+	     live in.
+20110402 ver 0.9.6
+           -Added a section "SNAPSHOTS" to the man page, to express that
+             zxfer is designed to work with snapshots, and how it does so.
+	   -Made zxfer use awk in FreeBSD, gawk in Solaris, so that there
+	     is only the rsync dependency remaining for purpose of porting.
+20110331 ver 0.9.5
+           -Changed download package to have a directory within, to suit ports.
+20110331 ver 0.9.4
+           -Some refactoring, updating man page, and testing to make
+             it work better on S11E.
+20110329 ver 0.9.3
+           -Tested local transfers on FBSD 8.2 and SE11. Tested remote
+             transfers on FBSD 8.2.
+	   -Updated the man page.
+20110328   -Implemented the -O and -T remote transfer options. Tested on
+             FreeBSD somewhat.
+20110327 ver 0.9.2  
+           -Added "Compatibility" section to man page.
+           -Added to the man page a warning not to tack switches with arguments
+             on the end of a list of switches without arguments.
+	   -Alphabetized the options in the man page, and in the script.
+20110323   -Started fixing a bug so that zxfer can work with remote hosts via 
+             ssh.
+	   -Added "vscan,nbmand" to the list of properties not supported
+	     by FreeBSD.
+20110321   -Added "xattr" to list of properties not supported on FreeBSD,
+             so that zxfer works on FreeBSD 8.2 out of the box.
+	   -Changed the beep option, breaking backwards compatibility for
+	     the sake of having more logical switches. The B is a "big beep",
+	     alerting the user for success or failure. The b is a "small beep"
+	     that will only sound on error.
+20101211 ver 0.9.0 -Added some output for errors.
+           -Added proviso to man page about backing up/restoring FreeBSD
+	     root directories.
+           -Familiarized self with mercurial workflow in anticipation of
+	     publishing.
+           -Fixed several Solaris compatibility bugs.
+           -Added /usr/bin as rsync location
+	   -Changed awk to gawk
+	   -mlslabel transferring is not supported at this stage.
+	   -ditto for keysource,keystatus,rekeydate,encryption.
+	   -OpenSolaris wasn't handling 3 pipes in a single line, reduced
+	    to maximum of 2 and it works.
+20101127 ver 0.8.3 A week trialing zxfer on the workstation in active use
+             pays off. Not all snapshots were transferring with zfs send
+	     based zxfers. Needless to say, very glad it's squashed.
+	   -Also added a beep (-b) feature, to alert when zxfer finishes.
+	   -Finished tweaking and testing the man page for easy conversion
+	     to Solaris format (using mdoc2man.awk).
+20101117 ver 0.8.2 Nearly ready, just needs Solaris man page.
+           -Location of rsync is searched for at the start.
+20101115 ver 0.8.1 Ready to release?
+           -Finished testing on all of the examples in the man page.
+           -Added the ability to specify snapshots to use as a base
+	     for rsync (option "u").
+	   -Changed the default rsync options (see man page).
+20101013 ver 0.8.0 First "near final" draft sent to Constantin.
+           In the intervening time, many changes have taken place. 
+	   zxfer is chosen as the new name. Some of the additional features:
+	   -recursive transfers
+	   -property and property source transfer of ZFS filesystems - 
+	     creation and setting
+	   -property overrides (e.g. for compression, dedup, copies etc.)
+	   -an rsync mode, for copying arbitrary files and directories 
+	     from within a pool atomically
+	   -property backup mode, to allow the future restore of properties
+	     while retaining the ability to back them up with different
+	     properties than they would otherwise have, e.g. compression etc.
+	   -removed the ksh dependency
+	   -a man page
+	   -much bug testing
+20100504 Dreckman worked on a bug fix and some additions to
+           zfs-replicate; these are submitted to CG. At this stage
+	   the additions are already fairly extensive, so Contantin kindly 
+	   suggested that the new version become a new utility in its 
+	   own right. Collaboration commenced between the two with 
+	   Constantin offering helpful guidance throughout as Dreckman coded
+	   new features and squashed bugs.
+20080813 zfs-replicate 0.7 is released by Constantin Gonzalez as the
+           last update in his zfs-replicate utility. This may be found at
+         http://blogs.sun.com/constantin/entry/zfs_replicator_script_new_edition
