@@ -173,8 +173,9 @@ usedbysnapshots,usedbydataset,usedbychildren,usedbyrefreservation,\
 version,volsize,mountpoint,mlslabel,keysource,keystatus,rekeydate,encryption"
 
 
-# Properties not supported on FreeBSD 8.2
-fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,xattr"
+# Properties not supported on FreeBSD 9.2
+fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,\
+xattr,refcompressratio,written,logicalused,logicalreferenced"
 
 # Properties not supported on Solaris Express 11
 solexp_readonly_properties="jailed,aclmode,shareiscsi"
