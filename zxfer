@@ -422,7 +422,6 @@ copy_snap() {
           $LZFS send $copysrc | $RZFS receive $option_F $copydest || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }        
         else
-          $LZFS send -nv $copysrc
           echo "$LZFS send $copysrc | $RZFS receive $option_F $copydest"
         fi
       fi
@@ -451,7 +450,6 @@ copy_snap() {
           $LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
-          $LZFS send -nv -i $copyprev $copysrc
           echo "$LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest"
         fi
       fi
