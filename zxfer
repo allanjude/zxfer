@@ -401,16 +401,18 @@ copy_snap() {
     if [ "$copyprev" = "" ]; then
       if [ "$option_D" != "" ]; then
         if [ $option_n -eq 0 ]; then
-          SIZE_EST=`$LZFS send -nPv $copysrc 2>&1 | grep ^size | \
-            tail -n 1 | cut -f 2`
+          SIZE_EST=$( $LZFS send -nPv $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2) || { echo "Error calculating estimate."; \
+              beep; exit 1; }
           PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
             sed s#%%title%%#$copysrc#g`
           $LZFS send $copysrc | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG | \
             $RZFS receive $option_F $copydest || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
-          SIZE_EST=`$LZFS send -nPv $copysrc 2>&1 | grep ^size | \
-            tail -n 1 | cut -f 2`
+          SIZE_EST=$( $LZFS send -nPv $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2 ) || { echo "Error calculating estimate."; \
+              beep; exit 1; }
           PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
             sed s#%%title%%#$copysrc#g`
           $LZFS send -nv $copysrc
@@ -429,16 +431,18 @@ copy_snap() {
       echov "  (incremental to $copyprev.)"
       if [ "$option_D" != "" ]; then
         if [ $option_n -eq 0 ]; then
-          SIZE_EST=`$LZFS send -nPv -i $copyprev $copysrc 2>&1 | grep ^size | \
-            tail -n 1 | cut -f 2`
+          SIZE_EST=$( $LZFS send -nPv -i $copyprev $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2 ) || { echo "Error calculating estimate."; \
+              beep; exit 1; }
           PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
             sed s#%%title%%#$copysrc#g`
           $LZFS send -i $copyprev $copysrc | dd obs=1m | dd bs=1m | \
             $PROGRESS_DIALOG | $RZFS receive $option_F $copydest || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }        
         else
-          SIZE_EST=`$LZFS send -nPv -i $copyprev $copysrc 2>&1 | grep ^size | \
-            tail -n 1 | cut -f 2`
+          SIZE_EST=$( $LZFS send -nPv -i $copyprev $copysrc 2>&1 | grep ^size | \
+            tail -n 1 | cut -f 2) || { echo "Error calculating estimate."; \
+              beep; exit 1; }
           PROGRESS_DIALOG=`echo $option_D | sed s#%%size%%#$SIZE_EST#g | \
             sed s#%%title%%#$copysrc#g`
           $LZFS send -nv -i $copyprev $copysrc
