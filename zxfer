@@ -173,12 +173,12 @@ default_rsync_options="-clptgoD --inplace --relative -H --numeric-ids"
 readonly_properties="type,creation,used,available,referenced,\
 compressratio,mounted,version,primarycache,secondarycache,\
 usedbysnapshots,usedbydataset,usedbychildren,usedbyrefreservation,\
-version,volsize,mountpoint,mlslabel,keysource,keystatus,rekeydate,encryption"
+version,volsize,mountpoint,mlslabel,keysource,keystatus,rekeydate,encryption,\
+refcompressratio,written,logicalused,logicalreferenced"
 
 
 # Properties not supported on FreeBSD 9.2
-fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,\
-xattr,refcompressratio,written,logicalused,logicalreferenced"
+fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,xattr"
 
 # Properties not supported on Solaris Express 11
 solexp_readonly_properties="jailed,aclmode,shareiscsi"
