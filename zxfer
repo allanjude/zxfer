@@ -428,7 +428,7 @@ copy_snap() {
         fi
       fi
     else
-      echo "  (incremental to $copyprev.)"
+      echov "  (incremental to $copyprev.)"
       if [ "$option_D" != "" ]; then
         if [ $option_n -eq 0 ]; then
           SIZE_DATASET=$( $LZFS send -nPv -i $copyprev $copysrc 2>&1 ) ||
