@@ -1172,7 +1172,7 @@ transfer_properties() {
   # get source properties,values,sources in form 
   # property1=value1=source1,property2=value2=source2,...
   # Use -p to remove units, since localization can make these incompatible
-  source_pvs=$($LZFS get -Hop property,value,source all "$source"\
+  source_pvs=$($LZFS get -Hpo property,value,source all "$source"\
     | tr "\t" "=" | tr "\n" ",")
   source_pvs=$(echo "$source_pvs" | sed -e 's/,$//g')
   
@@ -1384,7 +1384,7 @@ with specified properties."
     # (This and reversion back is so that $RZFS command works with -r)
     IFS=$OLDIFS
 
-    dest_pvs=$($RZFS get -Hop property,value,source all "$actual_dest")
+    dest_pvs=$($RZFS get -Hpo property,value,source all "$actual_dest")
 
     #change the field separator to a ","
     OLDIFS=$IFS
