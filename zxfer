@@ -94,7 +94,7 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="1.1.0-20131108"
+zxfer_version="1.1.1-20140503"
 
 # Default values
 option_b=0
@@ -1171,7 +1171,8 @@ transfer_properties() {
 
   # get source properties,values,sources in form 
   # property1=value1=source1,property2=value2=source2,...
-  source_pvs=$($LZFS get -Ho property,value,source all "$source"\
+  # Use -p to remove units, since localization can make these incompatible
+  source_pvs=$($LZFS get -Hop property,value,source all "$source"\
     | tr "\t" "=" | tr "\n" ",")
   source_pvs=$(echo "$source_pvs" | sed -e 's/,$//g')
   
@@ -1383,7 +1384,7 @@ with specified properties."
     # (This and reversion back is so that $RZFS command works with -r)
     IFS=$OLDIFS
 
-    dest_pvs=$($RZFS get -Ho property,value,source all "$actual_dest")
+    dest_pvs=$($RZFS get -Hop property,value,source all "$actual_dest")
 
     #change the field separator to a ","
     OLDIFS=$IFS
