@@ -1,7 +1,7 @@
 #!/bin/sh
 # BSD HEADER START
 
-# Copyright (c) 2013-2014 Allan Jude <freebsd@allanjude.com>
+# Copyright (c) 2013-2014 Allan Jude <allanjude@freebsd.org>
 # Copyright (c) 2010,2011 Ivan Nash Dreckman
 # Copyright (c) 2007, 2008 Constantin Gonzalez
 # All rights reserved.
@@ -35,13 +35,13 @@
 # either zfs send/receive or rsync to do the heavy lifting.
 
 # Comments, suggestions, bug reports please to:
-# Ivan Dreckman <ivannashdreckman at fastmailgolf dot fm>
-# Remove the sport originating in Scotland from the email address.
+# Allan Jude  <allanjude a-t freebsd d-o-t org>
 #
-# This utility comes with a man page. If you can't find it by typing
-# "man zxfer", you might look to download it from www.zxfer.org.
 
 # Acknowledgments
+# Thanks to Ivan Nash Dreckman for creating zxfer and writing good documentation
+# which resulted in zxfer being the most useful of the available tools
+#
 # Thanks to Constantin Gonzalez (original author of zfs-replicate) for 
 # the generous permission and licensing of his script zfs-replicate which
 # (version 0.7) was used as the basis for this script. Thanks in turn to
@@ -82,7 +82,7 @@
 #
 #     zxfer [-dFnPsv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
 #           [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
-#           [-D 'progress dialog options']
+#           [-D 'progress dialog options'] [-I properties,to,ignore]
 #           [-T user@host] [-o option1=value1,option2=value2...] [-g days]
 #           destination
 #     zxfer {-S} [-dilpPnv] [-k | -e] [-b | -B] [-f /path/to/rsfile]
@@ -94,7 +94,7 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="1.1.1-20140503"
+zxfer_version="1.1.2-20140720"
 
 # Default values
 option_b=0
@@ -106,6 +106,7 @@ option_E=""
 option_f=""
 option_g=""
 option_i=0
+option_I=""
 option_F=""
 option_k=0
 option_l=0
@@ -177,7 +178,7 @@ version,volsize,mountpoint,mlslabel,keysource,keystatus,rekeydate,encryption,\
 refcompressratio,written,logicalused,logicalreferenced"
 
 
-# Properties not supported on FreeBSD 9.2
+# Properties not supported on FreeBSD 9.3
 fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,xattr"
 
 # Properties not supported on Solaris Express 11
@@ -191,7 +192,7 @@ beep() {
 if [ $option_b -eq 1 -o $option_B -eq 1 ]; then
   # load the speaker kernel module if not loaded already
   speaker_km_loaded=$(kldstat | grep -c speaker.ko)
-  if [ $speaker_km_loaded = "0" ]; then
+  if [ "$speaker_km_loaded" = "0" ]; then
     kldload "speaker"
   fi
 
@@ -256,7 +257,7 @@ cat <<EOT
 usage: 
      zxfer [-dFnPsv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
            [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
-           [-D 'progress dialog options']
+           [-D 'progress dialog options'] [-I properties,to,ignore]
            [-T user@host] [-o option1=value1,option2=value2...] [-g days]
            destination
      zxfer {-S} [-dilpPnv] [-k | -e] [-b | -B] [-f /path/to/rsfile]
@@ -279,7 +280,7 @@ EOT
 # Print out information if in verbose mode
 #
 echov() {
-  if [ $option_v -eq 1 ]; then echo $*; fi
+  if [ $option_v -eq 1 ]; then echo "$@"; fi
 }
 
 
@@ -403,7 +404,8 @@ copy_snap() {
         if [ $option_n -eq 0 ]; then
           SIZE_DATASET=$( $LZFS send -nPv $copysrc 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
-          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 ) 
+          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
+          echov "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
           $LZFS send $copysrc | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG | \
@@ -412,7 +414,8 @@ copy_snap() {
         else
           SIZE_DATASET=$( $LZFS send -nPv $copysrc 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
-          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 ) 
+          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
+          echov "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
           $LZFS send -nv $copysrc
@@ -433,7 +436,8 @@ copy_snap() {
         if [ $option_n -eq 0 ]; then
           SIZE_DATASET=$( $LZFS send -nPv -i $copyprev $copysrc 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
-          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 ) 
+          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
+          echov "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
           $LZFS send -i $copyprev $copysrc | dd obs=1m | dd bs=1m | \
@@ -442,7 +446,8 @@ copy_snap() {
         else
           SIZE_DATASET=$( $LZFS send -nPv -i $copyprev $copysrc 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
-          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 ) 
+          SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
+          echov "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
           $LZFS send -nv -i $copyprev $copysrc
@@ -481,6 +486,9 @@ copy_snap_multiple() {
     lastsnap="$source@$last_common_snap"
   fi
 
+  # This can get stale, especially if it has taken hours to copy the previous
+  # snapshot. Consider adding a time check and refreshing the list of snapshots
+  # if it has been too long since we got the list
   for snapshot in $copy_fs_snapshot_list; do
     copy_snap
     lastsnap=$snapshot
@@ -660,7 +668,10 @@ get_zfs_list() {
   # need to confuse things by keeping it on there. Get rid of it.
   # The regex gets of every instance of a slash at the end of the line
   # provided that it is preceded by 1 character.
-  initial_source=$(echo "$initial_source" | sed -e 's%\(.\)/$%\1%')
+  ## initial_source=$(echo "$initial_source" | sed -e 's%\(.\)/$%\1%')
+
+  # Above replaced by shell expansion to avoid forking
+  initial_source=${initial_source%/}
 
   rzfs_list_ho_s=$($RZFS list -Ho name -s creation)
   lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot)
@@ -717,7 +728,10 @@ get_zfs_list_rsync_mode() {
   # We want to get a list of every ZFS filesystem that holds data that will be
   # transferred. Note that trailing slashes don't seem to matter.
   option_RN="$option_R,$option_N"
-  option_RN=$(echo "$option_RN" | sed -e 's/^,//g' | sed -e 's/,$//g')
+  ##option_RN=$(echo "$option_RN" | sed -e 's/^,//g' | sed -e 's/,$//g')
+  # Replace the above with shell expansion
+  option_RN=${option_RN#,}
+  option_RN=${option_RN%,}
 
   if [ "$option_L" != "" ];then
     if [ $option_L -lt "1" ]; then
@@ -741,7 +755,9 @@ get_zfs_list_rsync_mode() {
 
     temp_fs_list=$($LZFS list -Hr -o name $source_RN)
     temp_fs_list_comma=$(echo "$temp_fs_list" | tr -s "\n" ",")
-    temp_fs_list_comma=$(echo "$temp_fs_list_comma" | sed -e 's/,$//g')
+    ##temp_fs_list_comma=$(echo "$temp_fs_list_comma" | sed -e 's/,$//g')
+    # Replace above with shell expansion
+    temp_fs_list_comma=${temp_fs_list_comma%,}
 
     if [ "$option_L" != "" ];then
       for fs in $temp_fs_list_comma; do
@@ -1065,6 +1081,67 @@ get_actual_dest() {
   fi
 }
 
+#
+# Calculate a list of properties that are not supported on the destination so
+# they can be excluded from the properties transfer
+# This allows replicating data from newer version of ZFS to older versions
+#
+calculate_unsupported_properties() {
+  # Get a list of the supported properties from the destination
+  dest_pool_name=$(actual_dest%%/*)
+  dest_supported_properties=$($RZFS get -Ho property all $dest_pool_name | tr '\n' ',')
+
+  # Get a list of the supported properties from the source
+  source_pool_name=${initial_source%%/*}
+  source_supported_properties=$($LZFS get -Ho property all $source_pool_name | tr '\n' ',')
+  
+  unsupported_properties=
+
+  for s_p in $source_supported_properties;do
+    found_supported_prop=0
+    for d_p in $dest_supported_properties; do
+      if [ "$s_p" = "$d_p" ]; then
+        $found_supported_prop=1
+        break;
+      fi
+    done
+    if [ $found_supported_prop -eq 0 ]; then
+      unsupported_properties="${unsupported_properties}${$s_p},"
+    fi
+  done
+  unsupported_properties=$unsupported_properties%,}
+}
+
+#
+# Removes the readonly properties and values from a list of properties
+# values and sources in the format property1=value1=source1,...
+# output is in new_rmv_pvs
+#
+remove_unsupported_properties() {
+  orig_set_list=$1      # the list of properties=values=sources,...
+  
+  only_supported_properties="" 
+  for orig_line in $orig_set_list; do 
+    found_unsup=0
+    orig_set_property=$(echo "$orig_line" | cut -f1 -d=)
+    orig_set_value=$(echo "$orig_line" | cut -f2 -d=)
+    orig_set_source=$(echo "$orig_line" | cut -f3 -d=)
+    for property in $unsupported_properties; do
+      if [ "$property" = "$orig_set_property" ]; then
+        found_unsup=1
+        break
+      fi
+    done
+    if [ $found_unsup -eq 0 ]; then
+      only_supported_properties="$only_supported_properties$orig_set_property=$orig_set_value=$orig_set_source,"
+    else
+      echo "Not setting unsupported property \
+        ${orig_set_property}=${orig_set_value} because it is not supported on \
+        the destination pool"
+    fi
+  done
+  only_supported_properties=${only_supported_properties%,}
+}
 
 #
 # Removes the readonly properties and values from a list of properties
@@ -1072,7 +1149,7 @@ get_actual_dest() {
 # output is in new_rmv_pvs
 #
 remove_properties() {
-  rmv_list=$1      # the list of properties,values,sources
+  rmv_list=$1      # the list of properties=values=sources,...
   remove_list=$2   # list of properties to remove
   
   new_rmv_pvs="" 
@@ -1095,7 +1172,9 @@ remove_properties() {
       new_rmv_pvs="$new_rmv_pvs$rmv_property=$rmv_value=$rmv_source,"
     fi
   done    
-  new_rmv_pvs=$(echo "$new_rmv_pvs" | sed -e 's/,$//g')
+  ##new_rmv_pvs=$(echo "$new_rmv_pvs" | sed -e 's/,$//g')
+  # Replace above with shell expansion
+  new_rmv_pvs=${new_rmv_pvs%,}
 }
 
 
@@ -1113,7 +1192,9 @@ remove_sources() {
     rmvs_value=$(echo "$rmvs_line" | cut -f2 -d=)
     new_rmvs_pv="$new_rmvs_pv$rmvs_property=$rmvs_value,"
   done    
-  new_rmvs_pv=$(echo "$new_rmvs_pv" | sed -e 's/,$//g')
+  ##new_rmvs_pv=$(echo "$new_rmvs_pv" | sed -e 's/,$//g')
+  # Replace above with shell expansion
+  new_rmvs_pv=${new_rmvs_pv%,}
 }
 
 
@@ -1147,7 +1228,9 @@ select_mc() {
       new_mc_pvs="$new_mc_pvs$mc_property=$mc_value=$mc_source,"
     fi
   done    
-  new_mc_pvs=$(echo "$new_mc_pvs" | sed -e 's/,$//g')
+  ##new_mc_pvs=$(echo "$new_mc_pvs" | sed -e 's/,$//g')
+  # Replace above with shell expansion
+  new_mc_pvs=${new_mc_pvs%,}
 }
 
 
@@ -1174,7 +1257,9 @@ transfer_properties() {
   # Use -p to remove units, since localization can make these incompatible
   source_pvs=$($LZFS get -Hpo property,value,source all "$source"\
     | tr "\t" "=" | tr "\n" ",")
-  source_pvs=$(echo "$source_pvs" | sed -e 's/,$//g')
+  ##source_pvs=$(echo "$source_pvs" | sed -e 's/,$//g')
+  # Replace above with shell expansion
+  source_pvs=${source_pvs%,}
   
   # add to the details to allow backup of properties
   # unless $dont_write_backup non-zero, as with first rsync transfer
@@ -1295,7 +1380,17 @@ $override_value=$override_source,"
 
   # Remove the readonly properties and values.
   remove_properties "$override_pvs" "$readonly_properties"
+  # Remove the properties the user has asked us to ignore
+  if [ -z "$option_I" ]; then
+    remove_properties "$new_rmv_pvs" "$option_I"
+  fi
   override_pvs="$new_rmv_pvs"
+
+  # Remove any properties that are not supported by the destination
+  if [ -z "$unsupported_properties" ]; then
+    remove_unsupported_properties "$override_pvs"
+    override_pvs="$only_supported_properties"
+  fi
 
   dest_exist=$(echo "$recursive_dest_list" | grep -c "^$actual_dest$")
 
@@ -1336,6 +1431,10 @@ $override_value=$override_source,"
       # for non-initial source, all the overrides will be inherited, hence
       # create with creation_pvs list
       remove_properties "$creation_pvs" "$readonly_properties"
+      # Remove the properties the user has asked us to ignore
+      if [ -z "$option_I" ]; then
+        remove_properties "$new_rmv_pvs" "$option_I"
+      fi
       creation_pvs="$new_rmv_pvs"
 
       remove_sources "$creation_pvs"
@@ -1391,10 +1490,16 @@ with specified properties."
     IFS=","
 
     dest_pvs=$(echo "$dest_pvs" | tr -s "\t" "=" | tr -s "\n" ",")
-    dest_pvs=$(echo "$dest_pvs" | sed -e 's/,$//g')
+    ##dest_pvs=$(echo "$dest_pvs" | sed -e 's/,$//g')
+    # Replace above with shell expansion
+    dest_pvs=${dest_pvs%,}
 
     # remove the readonly properties and values as we are not comparing to them
     remove_properties "$dest_pv" $readonly_properties
+    # Remove the properties the user has asked us to ignore
+    if [ -z "$option_I" ]; then
+      remove_properties "$new_rmv_pvs" "$option_I"
+    fi
     dest_pv="$new_rmv_pvs"
     
     # Test to see if any of the four properties that must be specified at
@@ -1454,6 +1559,10 @@ with specified properties."
     override_pvs="$new_rmv_pvs"
 
     remove_properties "$dest_pvs" "$must_create_properties,$readonly_properties"
+    # Remove the properties the user has asked us to ignore
+    if [ -z "$option_I" ]; then
+      remove_properties "$new_rmv_pvs" "$option_I"
+    fi
 
     dest_pvs="$new_rmv_pvs"
 
@@ -1505,9 +1614,13 @@ with specified properties."
     done
     
     # remove commas from end of line
-    ov_initsrc_set_list=$(echo "$ov_initsrc_set_list" | sed -e 's/,$//g')
-    ov_set_list=$(echo "$ov_set_list" | sed -e 's/,$//g')
-    ov_inherit_list=$(echo "$ov_inherit_list" | sed -e 's/,$//g')
+    ##ov_initsrc_set_list=$(echo "$ov_initsrc_set_list" | sed -e 's/,$//g')
+    ##ov_set_list=$(echo "$ov_set_list" | sed -e 's/,$//g')
+    ##ov_inherit_list=$(echo "$ov_inherit_list" | sed -e 's/,$//g')
+    # Replace above with shell expansion
+    ov_initsrc_set_list=${ov_initsrc_set_list%,}
+    ov_set_list=${ov_set_list%,}
+    ov_inherit_list=${ov_inherit_list%,}
 
     # Now we have a list of only changes to make using zfs set.
     # Let's make the changes.
@@ -2010,19 +2123,25 @@ else
   if [ $option_e -eq 1 ]; then
     get_backup_properties
   fi
-  
+
+  calculate_unsupported_properties
+
   # If recursive option is not selected, then we only iterate once through 
   # the initial source as source
   if [ "$option_R" = "" ]; then
-    recursive_source_list=$initial_source 
+    recursive_source_list=$initial_source
   fi
   
   # This gets the root filesystem transferred - e.g. 
   # the string after the very last "/" e.g. backup/test/zroot -> zroot
-  base_fs=$(echo "$initial_source" | sed -e 's/.*\///g')
+  ##base_fs=$(echo "$initial_source" | sed -e 's/.*\///g')
+  # Replace the above with shell expansion
+  base_fs=${initial_source##*/}
   # This gets everything but the base_fs, so that we can later delete it from
   # $source
-  part_of_source_to_delete=$(echo "$initial_source" | sed -e "s/$base_fs$//g")
+  ##part_of_source_to_delete=$(echo "$initial_source" | sed -e "s/$base_fs$//g")
+  # Replace the above with shell expansion
+  part_of_source_to_delete=${initial_source%$base_fs}
 
 
   #
@@ -2093,7 +2212,7 @@ else
     sourcefslast=`echo $sourcefs | sed -e "s%.*/%%"`
 
     get_actual_dest
-  
+
     # If using the -m feature, check if the source is mounted, 
     # otherwise there's no point in us doing the remounting.
     if [ $option_m -eq 1 ]; then
