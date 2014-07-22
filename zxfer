@@ -94,7 +94,7 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="1.1.2-20140720"
+zxfer_version="1.1.3-20140721"
 
 # Default values
 option_b=0
@@ -1082,6 +1082,37 @@ get_actual_dest() {
 }
 
 #
+# Normalize the list of properties to set by using a mix of human-readable and
+# machine-readable values
+#
+resolve_human_vars() {
+  machine_vars=$1
+  human_vars=$2
+  FUNCIFS=$IFS
+  IFS=","
+
+  human_results=
+  for h_var in $human_vars; do
+    h_prop=${h_var%%=*}
+    for m_var in $machine_vars; do
+      m_prop=${m_var%%=*}
+      if [ "$h_prop" == "$m_prop" ]; then
+        machine_property=$(echo "$m_var" | cut -f1 -d=)
+        machine_value=$(echo "$m_var" | cut -f2 -d=)
+        machine_source=$(echo "$m_var" | cut -f3 -d=)
+        human_value=$(echo "$h_var" | cut -f2 -d=)
+        if [ "$human_value" == "none" ]; then
+          machine_value=$human_value
+        fi
+        human_results="${human_results}$machine_property=$machine_value=$machine_source,"
+      fi
+    done
+  done
+  human_results=${human_results%,}
+  IFS=$FUNCIFS
+}
+
+#
 # Calculate a list of properties that are not supported on the destination so
 # they can be excluded from the properties transfer
 # This allows replicating data from newer version of ZFS to older versions
@@ -1119,9 +1150,11 @@ calculate_unsupported_properties() {
 #
 remove_unsupported_properties() {
   orig_set_list=$1      # the list of properties=values=sources,...
-  
+  FUNCIFS=$IFS
+  IFS=","
+
   only_supported_properties=""
-  for orig_line in $orig_set_list; do 
+  for orig_line in $orig_set_list; do
     found_unsup=0
     orig_set_property=$(echo "$orig_line" | cut -f1 -d=)
     orig_set_value=$(echo "$orig_line" | cut -f2 -d=)
@@ -1139,6 +1172,7 @@ remove_unsupported_properties() {
     fi
   done
   only_supported_properties=${only_supported_properties%,}
+  IFS=$FUNCIFS
 }
 
 #
@@ -1151,7 +1185,7 @@ remove_properties() {
   remove_list=$2   # list of properties to remove
   
   new_rmv_pvs="" 
-  for rmv_line in $rmv_list; do 
+  for rmv_line in $rmv_list; do
     found_readonly=0
     rmv_property=$(echo "$rmv_line" | cut -f1 -d=)
     rmv_value=$(echo "$rmv_line" | cut -f2 -d=)
@@ -1188,7 +1222,7 @@ remove_properties() {
 remove_sources() {
   rmvs_list=$1
 
-  new_rmvs_pv="" 
+  new_rmvs_pv=""
   for rmvs_line in $rmvs_list; do 
     rmvs_property=$(echo "$rmvs_line" | cut -f1 -d=)
     rmvs_value=$(echo "$rmvs_line" | cut -f2 -d=)
@@ -1262,7 +1296,21 @@ transfer_properties() {
   ##source_pvs=$(echo "$source_pvs" | sed -e 's/,$//g')
   # Replace above with shell expansion
   source_pvs=${source_pvs%,}
-  
+  source_human_pvs=$($LZFS get -Ho property,value,source all "$source"\
+    | tr "\t" "=" | tr "\n" ",")
+  source_human_pvs=${source_human_pvs%,}
+
+  # Some localizations (German, French) use a comma as a decimal separator which
+  # changes the interpretation of the value on machines with a different
+  # localization.  Some OSes (OS X) use odd units (Ki) instead of K, and the
+  # values cannot be interpretted properly on other localizations
+  # Resolve this issue by passing -p which generates 'script parsable' output
+  # However, some properties have a value of 'none', that in -p ends up having
+  # a different value (filesystem_count=18446744073709551615)
+  # clean these up by comparing the two outputs and making the right decision
+  resolve_human_vars "$source_pvs" "$source_human_pvs"
+  source_pvs="$human_results"
+
   # add to the details to allow backup of properties
   # unless $dont_write_backup non-zero, as with first rsync transfer
   # of properties
@@ -1486,6 +1534,7 @@ with specified properties."
     IFS=$OLDIFS
 
     dest_pvs=$($RZFS get -Hpo property,value,source all "$actual_dest")
+    dest_human_pvs=$($RZFS get -Ho property,value,source all "$actual_dest")
 
     #change the field separator to a ","
     OLDIFS=$IFS
@@ -1495,6 +1544,9 @@ with specified properties."
     ##dest_pvs=$(echo "$dest_pvs" | sed -e 's/,$//g')
     # Replace above with shell expansion
     dest_pvs=${dest_pvs%,}
+    dest_human_pvs=${dest_human_pvs%,}
+    resolve_human_vars "$dest_pvs" "$dest_human_pvs"
+    dest_pvs="$human_results"
 
     # remove the readonly properties and values as we are not comparing to them
     remove_properties "$dest_pv" $readonly_properties
