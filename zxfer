@@ -1379,13 +1379,13 @@ $override_value=$override_source,"
   # Remove the readonly properties and values.
   remove_properties "$override_pvs" "$readonly_properties"
   # Remove the properties the user has asked us to ignore
-  if [ -z "$option_I" ]; then
+  if [ -n "$option_I" ]; then
     remove_properties "$new_rmv_pvs" "$option_I"
   fi
   override_pvs="$new_rmv_pvs"
 
   # Remove any properties that are not supported by the destination
-  if [ -z "$unsupported_properties" ]; then
+  if [ -n "$unsupported_properties" ]; then
     remove_unsupported_properties "$override_pvs"
     override_pvs="$only_supported_properties"
   fi
@@ -1430,7 +1430,7 @@ $override_value=$override_source,"
       # create with creation_pvs list
       remove_properties "$creation_pvs" "$readonly_properties"
       # Remove the properties the user has asked us to ignore
-      if [ -z "$option_I" ]; then
+      if [ -n "$option_I" ]; then
         remove_properties "$new_rmv_pvs" "$option_I"
       fi
       creation_pvs="$new_rmv_pvs"
@@ -1495,7 +1495,7 @@ with specified properties."
     # remove the readonly properties and values as we are not comparing to them
     remove_properties "$dest_pv" $readonly_properties
     # Remove the properties the user has asked us to ignore
-    if [ -z "$option_I" ]; then
+    if [ -n "$option_I" ]; then
       remove_properties "$new_rmv_pvs" "$option_I"
     fi
     dest_pv="$new_rmv_pvs"
@@ -1558,7 +1558,7 @@ with specified properties."
 
     remove_properties "$dest_pvs" "$must_create_properties,$readonly_properties"
     # Remove the properties the user has asked us to ignore
-    if [ -z "$option_I" ]; then
+    if [ -n "$option_I" ]; then
       remove_properties "$new_rmv_pvs" "$option_I"
     fi
 
