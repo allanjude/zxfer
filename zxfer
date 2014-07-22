@@ -1089,11 +1089,11 @@ get_actual_dest() {
 calculate_unsupported_properties() {
   # Get a list of the supported properties from the destination
   dest_pool_name=${actual_dest%%/*}
-  dest_supported_properties=$($RZFS get -Ho property all $dest_pool_name | tr '\n' ',')
+  dest_supported_properties=$($RZFS get -Ho property all $dest_pool_name)
 
   # Get a list of the supported properties from the source
   source_pool_name=${initial_source%%/*}
-  source_supported_properties=$($LZFS get -Ho property all $source_pool_name | tr '\n' ',')
+  source_supported_properties=$($LZFS get -Ho property all $source_pool_name)
   
   unsupported_properties=
 
@@ -1101,7 +1101,7 @@ calculate_unsupported_properties() {
     found_supported_prop=0
     for d_p in $dest_supported_properties; do
       if [ "$s_p" = "$d_p" ]; then
-        $found_supported_prop=1
+        found_supported_prop=1
         break;
       fi
     done
@@ -1109,7 +1109,7 @@ calculate_unsupported_properties() {
       unsupported_properties="${unsupported_properties}${s_p},"
     fi
   done
-  unsupported_properties=$unsupported_properties%,}
+  unsupported_properties=${unsupported_properties%,}
 }
 
 #
@@ -1120,7 +1120,7 @@ calculate_unsupported_properties() {
 remove_unsupported_properties() {
   orig_set_list=$1      # the list of properties=values=sources,...
   
-  only_supported_properties="" 
+  only_supported_properties=""
   for orig_line in $orig_set_list; do 
     found_unsup=0
     orig_set_property=$(echo "$orig_line" | cut -f1 -d=)
@@ -1135,9 +1135,7 @@ remove_unsupported_properties() {
     if [ $found_unsup -eq 0 ]; then
       only_supported_properties="$only_supported_properties$orig_set_property=$orig_set_value=$orig_set_source,"
     else
-      echo "Not setting unsupported property \
-        ${orig_set_property}=${orig_set_value} because it is not supported on \
-        the destination pool"
+      echov "Destination does not support property ${orig_set_property}=${orig_set_value}"
     fi
   done
   only_supported_properties=${only_supported_properties%,}
