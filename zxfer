@@ -1159,6 +1159,10 @@ remove_properties() {
     # test for readonly properties
     for property in $remove_list; do
       if [ "$property" = "$rmv_property" ]; then
+        if [ "$rmv_source" == "override" ]; then
+            # The user has specifically required we set this property
+            continue;
+        fi
         found_readonly=1
         #since the property was matched let's not waste time looking for it again
         remove_list=$(echo "$remove_list" | tr -s "," "\n" | grep -v ^"$property"$)
