@@ -291,9 +291,9 @@ stopsvcs() {
 
   while read service; do
     echov "Disabling service $service."
-    svcadm disable -st $service || \
+    svcadm disable -st "$service" || \
       { echo "Could not disable service $service."; relaunch; exit 1; }
-    torestart=`echo $torestart $service`
+    torestart=$(echo $torestart $service)
   done
 }
 
@@ -304,7 +304,7 @@ stopsvcs() {
 relaunch() {
   for i in $torestart; do
     echov "Restarting service $i"
-    svcadm enable $i || { echo "Couldn't re-enable service $i."; exit; }
+    svcadm enable "$i" || { echo "Couldn't re-enable service $i."; exit; }
   done
 }
 
@@ -395,36 +395,36 @@ copy_snap() {
   copysrc=$snapshot
   copydest=$dest
   copyprev=$lastsnap
-  copysrctail=$( echo $copysrc | cut -d/ -f2- )
+  copysrctail=$( echo "$copysrc" | cut -d/ -f2- )
 
   if [ -z "$( echo "$rzfs_list_ho_s" | grep "^$dest/$copysrctail" )" ]; then
     echov "Sending $copysrc to $copydest."
     if [ "$copyprev" = "" ]; then
       if [ "$option_D" != "" ]; then
         if [ $option_n -eq 0 ]; then
-          SIZE_DATASET=$( $LZFS send -nPv $copysrc 2>&1 ) ||
+          SIZE_DATASET=$( $LZFS send -nPv "$copysrc" 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
           SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
-          echov "Estimated size is: ${SIZE_EST}"
-          PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
+          echo "Estimated size is: ${SIZE_EST}"
+          PROGRESS_DIALOG=$( echo "$option_D" | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send $copysrc | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG | \
-            $RZFS receive $option_F $copydest || \
+          $LZFS send "$copysrc" | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG | \
+            $RZFS receive $option_F "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
-          SIZE_DATASET=$( $LZFS send -nPv $copysrc 2>&1 ) ||
+          SIZE_DATASET=$( $LZFS send -nPv "$copysrc" 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
           SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
-          echov "Estimated size is: ${SIZE_EST}"
+          echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send -nv $copysrc
+          $LZFS send -nv "$copysrc"
           echo "$LZFS send $copysrc | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG |
             $RZFS receive $option_F $copydest"
         fi
       else
         if [ $option_n -eq 0 ]; then
-          $LZFS send $copysrc | $RZFS receive $option_F $copydest || \
+          $LZFS send "$copysrc" | $RZFS receive $option_F "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }        
         else
           echo "$LZFS send $copysrc | $RZFS receive $option_F $copydest"
@@ -434,29 +434,29 @@ copy_snap() {
       echov "  (incremental to $copyprev.)"
       if [ "$option_D" != "" ]; then
         if [ $option_n -eq 0 ]; then
-          SIZE_DATASET=$( $LZFS send -nPv -i $copyprev $copysrc 2>&1 ) ||
+          SIZE_DATASET=$( $LZFS send -nPv -i "$copyprev" "$copysrc" 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
           SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
-          echov "Estimated size is: ${SIZE_EST}"
+          echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send -i $copyprev $copysrc | dd obs=1m | dd bs=1m | \
-            $PROGRESS_DIALOG | $RZFS receive $option_F $copydest || \
+          $LZFS send -i "$copyprev" "$copysrc" | dd obs=1m | dd bs=1m | \
+            $PROGRESS_DIALOG | $RZFS receive $option_F "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }        
         else
-          SIZE_DATASET=$( $LZFS send -nPv -i $copyprev $copysrc 2>&1 ) ||
+          SIZE_DATASET=$( $LZFS send -nPv -i "$copyprev" "$copysrc" 2>&1 ) ||
             { echo "Error calculating estimate: $SIZE_DATASET"; beep; exit 1; }
           SIZE_EST=$( echo "$SIZE_DATASET" | grep ^size | tail -n 1 | cut -f 2 )
-          echov "Estimated size is: ${SIZE_EST}"
+          echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send -nv -i $copyprev $copysrc
+          $LZFS send -nv -i "$copyprev" "$copysrc"
           echo "$LZFS send -i $copyprev $copysrc | dd obs=1m | dd bs=1m | \
             $PROGRESS_DIALOG | $RZFS receive $option_F $copydest"      
         fi
       else
         if [ $option_n -eq 0 ]; then
-          $LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest \
+          $LZFS send -i "$copyprev" "$copysrc" | $RZFS receive $option_F "$copydest" \
             || { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
           echo "$LZFS send -i $copyprev $copysrc | $RZFS receive $option_F
@@ -514,12 +514,12 @@ copy_fs() {
 # Create a new recursive snapshot.
 #
 newsnap() {
-  snap=zxfer_$$_`date +%Y%m%d%H%M%S`
+  snap=zxfer_$$_$(date +%Y%m%d%H%M%S)
 
   if [ "$option_R" != "" ]; then
     echov "Creating recursive snapshot $sourcefs@$snap."
     if [ $option_n -eq 0 ]; then
-      $LZFS snapshot -r $sourcefs@$snap || \
+      $LZFS snapshot -r "${sourcefs}@${snap}" || \
           { echo "Error when snapshotting."; exit 1; }
     else
       echo "$LZFS snapshot -r $sourcefs@$snap"
@@ -527,7 +527,7 @@ newsnap() {
   else
     echov "Creating snapshot $sourcefs@$snap."
     if [ $option_n -eq 0 ]; then
-      $LZFS snapshot $sourcefs@$snap || \
+      $LZFS snapshot "${sourcefs}@${snap}" || \
           { echo "Error when snapshotting."; exit 1; }
     else
       echo "$LZFS snapshot $sourcefs@$snap"
@@ -542,11 +542,11 @@ newsnap() {
 #
 grandfather_test() {
   ds=$1
-  snap_date=$($RZFS get -H -o value -p creation $ds)
+  snap_date=$($RZFS get -H -o value -p creation "$ds")
   diff_sec=$((current_date-snap_date))
   diff_day=$((diff_sec/86400))
   if [ $diff_day -ge $option_g ]; then
-    snap_date_english=$($RZFS get -H -o value creation $ds)
+    snap_date_english=$($RZFS get -H -o value creation "$ds")
     current_date_english=$(date)
     echo "Error: On the destination there is a snapshot marked for destruction"
     echo "by zxfer that is protected by the use of the \"grandfather"
@@ -599,8 +599,8 @@ grep ^$source@) > /dev/null 2>&1
     mark_snap_for_deletion=1
     for src_snap in $zfs_source_snaps; do
       # if the snaps are identical
-      if [ `echo $dest_snap | grep @ | cut -d@ -f2` = `echo $src_snap | \
-        grep @ | cut -d@ -f2` ]; then
+      if [ $(echo $dest_snap | grep @ | cut -d@ -f2) = $(echo $src_snap | \
+        grep @ | cut -d@ -f2) ]; then
 
         # mark snap not to be deleted
         mark_snap_for_deletion=0
@@ -608,7 +608,7 @@ grep ^$source@) > /dev/null 2>&1
         # snap is the most recent common snap
         if [ $found_last_common_snap -eq 0 ]; then
           found_last_common_snap=1
-          last_common_snap=`echo $dest_snap | grep @ | cut -d@ -f2`
+          last_common_snap=$(echo $dest_snap | grep @ | cut -d@ -f2)
         fi
 
         # since the snap was matched, let's not waste our time searching for 
@@ -622,13 +622,13 @@ grep ^$source@) > /dev/null 2>&1
     done
 
     if [ $mark_snap_for_deletion = 1 -a "$option_g" != "" ]; then
-      grandfather_test $dest_snap
+      grandfather_test "$dest_snap"
     fi
 
     if [ $mark_snap_for_deletion = 1 -a $option_d -eq 1 ]; then
       echov "Destroying destination snapshot $dest_snap."
       if [ $option_n -eq 0 ]; then
-        $RZFS destroy $dest_snap || \
+        $RZFS destroy "$dest_snap" || \
           { echo "Error when zfs destroying."; exit 1; }
       else
         echo "$RZFS destroy $dest_snap"
@@ -662,7 +662,7 @@ get_zfs_list() {
   # 0 if not a trailing slash;  regex is one character of any sort followed by
   # zero or more of any character until "/" followed by the end of the
   # string.
-  trailing_slash=$(echo "$initial_source" | grep -c ..*/$ ) 
+  trailing_slash=$(echo "$initial_source" | grep -c '..*/$' ) 
 
   # Now that we know whether there was a trailing slash on the source, no
   # need to confuse things by keeping it on there. Get rid of it.
@@ -686,8 +686,8 @@ get_zfs_list() {
     rzfs_list_hr_S_snap=$($RZFS list -Hr -o name -S creation -t snapshot)
   fi
 
-  recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name $initial_source)
-  recursive_dest_list=$($RZFS list -t filesystem,volume -Hr -o name $destination)
+  recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name "$initial_source")
+  recursive_dest_list=$($RZFS list -t filesystem,volume -Hr -o name "$destination")
 
   # Exit if source not sound
   if [ "$recursive_source_list" = "" ]; then
@@ -743,7 +743,7 @@ get_zfs_list_rsync_mode() {
   fi
 
   for source_RN in $option_RN; do
-    source_RN_trailing_slash=$(echo "$source_RN" | grep -c ..*/$)
+    source_RN_trailing_slash=$(echo "$source_RN" | grep -c '..*/$')
 
     if [ $source_RN_trailing_slash -eq 1 ]; then
       echo "Error: Do not specify trailing slashes in sources."
@@ -829,7 +829,7 @@ specify is \"2\"."
   rzfs_list_Ho_mountpoint=$($RZFS list -t filesystem,volume -Ho mountpoint)
 
   initial_source=$root_fs
-  recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name $root_fs \
+  recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name "$root_fs" \
 | grep -v ^$destination)
   
   IFS="$OLD_IFS"
@@ -1054,7 +1054,7 @@ clean_up()
 #
 check_snapshot() {
 
-  initial_sourcesnap=`echo $initial_source | grep @ | cut -d@ -f2`
+  initial_sourcesnap=$(echo $initial_source | grep @ | cut -d@ -f2)
 
   # When using -s or -m, we don't want the source to be a snapshot.
   [ -n "$initial_sourcesnap" ] && \
@@ -1120,11 +1120,11 @@ resolve_human_vars() {
 calculate_unsupported_properties() {
   # Get a list of the supported properties from the destination
   dest_pool_name=${actual_dest%%/*}
-  dest_supported_properties=$($RZFS get -Ho property all $dest_pool_name)
+  dest_supported_properties=$($RZFS get -Ho property all "$dest_pool_name")
 
   # Get a list of the supported properties from the source
   source_pool_name=${initial_source%%/*}
-  source_supported_properties=$($LZFS get -Ho property all $source_pool_name)
+  source_supported_properties=$($LZFS get -Ho property all "$source_pool_name")
   
   unsupported_properties=
 
@@ -1403,7 +1403,7 @@ $override_value=$override_source,"
       for op_line in $option_o_pv; do 
         op_property=$(echo "$op_line" | cut -f1 -d=)
         op_value=$(echo "$op_line" | cut -f2 -d=)
-        if [ $op_property = $override_property ]; then
+        if [ "$op_property" = "$override_property" ]; then
           override_property=$op_property
           override_value=$op_value
           override_source="override"
@@ -1420,12 +1420,12 @@ $override_value=$override_source,"
 
   # Remove several properties not supported on FreeBSD.
   if [ "$dest_os" = "FreeBSD" ]; then
-    readonly_properties=$(echo "$readonly_properties,$fbsd_readonly_properties")
+    readonly_properties="$readonly_properties,$fbsd_readonly_properties"
   fi
 
   # Remove several properties not supported on Solaris Express.
   if [ "$dest_os" = "SunOS" -a "$source_os" = "FreeBSD" ]; then
-    readonly_properties=$(echo "$readonly_properties,$solexp_readonly_properties")
+    readonly_properties="$readonly_properties,$solexp_readonly_properties"
   fi
 
   # Remove the readonly properties and values.
@@ -1549,7 +1549,7 @@ with specified properties."
     dest_pvs="$human_results"
 
     # remove the readonly properties and values as we are not comparing to them
-    remove_properties "$dest_pv" $readonly_properties
+    remove_properties "$dest_pv" "$readonly_properties"
     # Remove the properties the user has asked us to ignore
     if [ -n "$option_I" ]; then
       remove_properties "$new_rmv_pvs" "$option_I"
@@ -1700,7 +1700,7 @@ with specified properties."
       IFS=$OLDIFS
 
       if [ $option_n -eq 0 ]; then
-        $RZFS set $ov_property=$ov_value $actual_dest || \
+        $RZFS set "${ov_property}=${ov_value}" "$actual_dest" || \
         { echo "Error when setting properties on destination filesystem.";\
 	beep; exit 1; }
       else
@@ -1725,7 +1725,7 @@ with specified properties."
         IFS=$OLDIFS
 
         if [ $option_n -eq 0 ]; then
-           $RZFS inherit $ov_property $actual_dest || \
+           $RZFS inherit "$ov_property" "$actual_dest" || \
             { echo "Error when inheriting properties on destination \
 filesystem."; beep; exit 1; }
         else
@@ -2017,7 +2017,7 @@ if [ $option_S -eq 1 ]; then
   # get the correct options to feed to rsync (excluding recursive)
   rsync_options="$default_rsync_options" 
   if [ "$option_f" != ""  ]; then
-    # gets the options to be passed to rsync, `if able to be read.
+    # gets the options to be passed to rsync, if able to be read.
     if [ -r "$option_f" ]; then
       rsync_options=$(cat "$option_f")
     else
@@ -2030,7 +2030,7 @@ if [ $option_S -eq 1 ]; then
 
   # recursively snapshot the source (if not using custom snapshot)
   if [ $option_u -eq 0 ]; then
-    $LZFS snapshot -r "$initial_source"@"$snapshot_name"
+    $LZFS snapshot -r "${initial_source}@${snapshot_name}"
   fi
 
   # for the first iteration of property transfer, we need to override the
@@ -2152,8 +2152,8 @@ else
   fi
  
   # Source and destination can't start with "/", but it's an easy mistake to make
-  if [ `echo $initial_source | grep -c ^/` -eq "1" -o \
-  `echo $destination | grep -c ^/` -eq "1" ]; then
+  if [ $(echo $initial_source | grep -c ^/) -eq "1" -o \
+      $(echo $destination | grep -c ^/) -eq "1" ]; then
     echo "Error:Source and destination must not begin with \"/\". Note the example."
     usage
     exit 1
@@ -2203,7 +2203,7 @@ else
   #
   if [ $option_s -eq 1 -a $option_m -eq 0 ]; then
     # We snapshot from the base of the initial source
-    sourcefs=`echo $initial_source | cut -d@ -f1`
+    sourcefs=$(echo $initial_source | cut -d@ -f1)
     # Create the new snapshot with a unique name.
     newsnap
     # Because there are new snapshots, need to get_zfs_list again
@@ -2227,12 +2227,12 @@ else
     for source in $recursive_source_list; do
       # unmount the source filesystem before doing the last snapshot.
       echov "Unmounting $source."
-      $LZFS unmount $source || \
+      $LZFS unmount "$source" || \
         { echo "Couldn't unmount source $source."; relaunch; exit 1; }
     done
   
     # We snapshot from the base of the initial source
-    sourcefs=`echo $initial_source | cut -d@ -f1`
+    sourcefs=$(echo $initial_source | cut -d@ -f1)
 
     # Create the last snapshot with a unique name.
     newsnap
@@ -2262,21 +2262,21 @@ else
   # main loop that copies the filesystems
   for source in $recursive_source_list; do
     # Split up source into source fs, last component
-    sourcefs=`echo $source | cut -d@ -f1`
-    sourcefslast=`echo $sourcefs | sed -e "s%.*/%%"`
+    sourcefs=$(echo $source | cut -d@ -f1)
+    sourcefslast=$(echo $sourcefs | sed -e "s%.*/%%")
 
     get_actual_dest
 
     # If using the -m feature, check if the source is mounted, 
     # otherwise there's no point in us doing the remounting.
     if [ $option_m -eq 1 ]; then
-      source_to_migrate_mounted=$($LZFS get -Ho value mounted $source)
+      source_to_migrate_mounted=$($LZFS get -Ho value mounted "$source")
       if [ "$source_to_migrate_mounted" = "yes" ]; then
         echo "The source filesystem is not mounted, why use -m?"
 	exit 1
       fi
-      mountpoint=`$LZFS get -Ho value mountpoint $source`
-      propsource=`$LZFS get -Ho source mountpoint $source`
+      mountpoint=$($LZFS get -Ho value mountpoint "$source")
+      propsource=$($LZFS get -Ho source mountpoint "$source")
       echov "Mountpoint is: $mountpoint. Source: $propsource."
     fi
   
