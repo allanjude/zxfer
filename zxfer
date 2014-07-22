@@ -1096,12 +1096,12 @@ resolve_human_vars() {
     h_prop=${h_var%%=*}
     for m_var in $machine_vars; do
       m_prop=${m_var%%=*}
-      if [ "$h_prop" == "$m_prop" ]; then
+      if [ "$h_prop" = "$m_prop" ]; then
         machine_property=$(echo "$m_var" | cut -f1 -d=)
         machine_value=$(echo "$m_var" | cut -f2 -d=)
         machine_source=$(echo "$m_var" | cut -f3 -d=)
         human_value=$(echo "$h_var" | cut -f2 -d=)
-        if [ "$human_value" == "none" ]; then
+        if [ "$human_value" = "none" ]; then
           machine_value=$human_value
         fi
         human_results="${human_results}$machine_property=$machine_value=$machine_source,"
@@ -1119,7 +1119,7 @@ resolve_human_vars() {
 #
 calculate_unsupported_properties() {
   # Get a list of the supported properties from the destination
-  dest_pool_name=${actual_dest%%/*}
+  dest_pool_name=${destination%%/*}
   dest_supported_properties=$($RZFS get -Ho property all "$dest_pool_name")
 
   # Get a list of the supported properties from the source
@@ -1193,7 +1193,7 @@ remove_properties() {
     # test for readonly properties
     for property in $remove_list; do
       if [ "$property" = "$rmv_property" ]; then
-        if [ "$rmv_source" == "override" ]; then
+        if [ "$rmv_source" = "override" ]; then
             # The user has specifically required we set this property
             continue;
         fi
