@@ -673,7 +673,7 @@ get_zfs_list() {
   # Above replaced by shell expansion to avoid forking
   initial_source=${initial_source%/}
 
-  rzfs_list_ho_s=$($RZFS list -Ho name -s creation)
+  rzfs_list_ho_s=$($RZFS list -t filesystem,volume -Ho name -s creation)
   lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot)
   # Note that for OpenSolaris compatibility, instead of using gtac
   # we will use ...| cat -n | sort -nr | cut -c 8-
@@ -686,8 +686,8 @@ get_zfs_list() {
     rzfs_list_hr_S_snap=$($RZFS list -Hr -o name -S creation -t snapshot)
   fi
 
-  recursive_source_list=$($LZFS list -Hr -o name $initial_source)
-  recursive_dest_list=$($RZFS list -Hr -o name $destination)
+  recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name $initial_source)
+  recursive_dest_list=$($RZFS list -t filesystem,volume -Hr -o name $destination)
 
   # Exit if source not sound
   if [ "$recursive_source_list" = "" ]; then
@@ -710,7 +710,7 @@ get_zfs_list() {
 #
 get_zfs_list_rsync_mode() {
 
-  recursive_dest_list=$($RZFS list -Hr -o name $destination)
+  recursive_dest_list=$($RZFS list -t filesystem,volume -Hr -o name $destination)
 
   #  Exit if destination not sound
   if [ "$recursive_dest_list" = "" ]; then
@@ -753,7 +753,7 @@ get_zfs_list_rsync_mode() {
       exit 1
     fi
 
-    temp_fs_list=$($LZFS list -Hr -o name $source_RN)
+    temp_fs_list=$($LZFS list -t filesystem,volume -Hr -o name $source_RN)
     temp_fs_list_comma=$(echo "$temp_fs_list" | tr -s "\n" ",")
     ##temp_fs_list_comma=$(echo "$temp_fs_list_comma" | sed -e 's/,$//g')
     # Replace above with shell expansion
@@ -824,12 +824,12 @@ specify is \"2\"."
   fi
 
   # for recursive option
-  zfs_list_Ho_name=$($LZFS list -H -o name)
-  lzfs_list_Ho_mountpoint=$($LZFS list -Ho mountpoint)
-  rzfs_list_Ho_mountpoint=$($RZFS list -Ho mountpoint)
+  zfs_list_Ho_name=$($LZFS list -t filesystem,volume -H -o name)
+  lzfs_list_Ho_mountpoint=$($LZFS list -t filesystem,volume -Ho mountpoint)
+  rzfs_list_Ho_mountpoint=$($RZFS list -t filesystem,volume -Ho mountpoint)
 
   initial_source=$root_fs
-  recursive_source_list=$($LZFS list -Hr -o name $root_fs \
+  recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name $root_fs \
 | grep -v ^$destination)
   
   IFS="$OLD_IFS"
@@ -887,7 +887,7 @@ $dest_exclude_dir_list"
 rsync_transfer() {
   # Note that the source is actually in the snapshot. This gets the
   # ZFS filesystem corresponding to the source in the original -R or -N list.
-  opt_src_fs=$($LZFS list -H -o name $opt_source)
+  opt_src_fs=$($LZFS list -t filesystem,volume -H -o name $opt_source)
 
   # We need to get all the filesystems at or below the level of the source.
   # This is a bit tricky; if opt_source is /tmp/foo/bar, and the filesystem
@@ -906,7 +906,7 @@ rsync_transfer() {
 
   if [ $source_type = "r" -a $is_fs -eq "1" ]; then
     # the directory is a filesystem - need to include all fs under source fs
-    opt_srs_all_inc_fs=$($LZFS list -H -o name | grep ^$opt_src_fs)
+    opt_srs_all_inc_fs=$($LZFS list -t filesystem,volume -H -o name | grep ^$opt_src_fs)
   else
     opt_srs_all_inc_fs=$opt_src_fs   # we will only loop through once
   fi
