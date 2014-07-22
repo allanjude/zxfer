@@ -486,9 +486,9 @@ copy_snap_multiple() {
     lastsnap="$source@$last_common_snap"
   fi
 
-  # This can get stale, especially if it has taken hours to copy the previous
-  # snapshot. Consider adding a time check and refreshing the list of snapshots
-  # if it has been too long since we got the list
+  # XXX: This can get stale, especially if it has taken hours to copy the
+  # previous snapshot. Consider adding a time check and refreshing the list of
+  # snapshots if it has been too long since we got the list
   for snapshot in $copy_fs_snapshot_list; do
     copy_snap
     lastsnap=$snapshot
@@ -1088,7 +1088,7 @@ get_actual_dest() {
 #
 calculate_unsupported_properties() {
   # Get a list of the supported properties from the destination
-  dest_pool_name=$(actual_dest%%/*)
+  dest_pool_name=${actual_dest%%/*}
   dest_supported_properties=$($RZFS get -Ho property all $dest_pool_name | tr '\n' ',')
 
   # Get a list of the supported properties from the source
@@ -1106,7 +1106,7 @@ calculate_unsupported_properties() {
       fi
     done
     if [ $found_supported_prop -eq 0 ]; then
-      unsupported_properties="${unsupported_properties}${$s_p},"
+      unsupported_properties="${unsupported_properties}${s_p},"
     fi
   done
   unsupported_properties=$unsupported_properties%,}
