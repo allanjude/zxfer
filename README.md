@@ -64,7 +64,9 @@ As the freenas file system is not persistent for user changes, we will need to u
 See the github WIKI for details on this, with screenshots (to be completed)- however basic steps are below for those capable.
 
 a) Create a standard jail via the freeness UI
+
 b) Add the datasets required for the transfer to the jail via the jails storage manager in the UI
+
 c) Use either the pkg or port methods above to install zxfer
 
 ###OpenSolaris, Solaris 11 Express:
