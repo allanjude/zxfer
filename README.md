@@ -59,15 +59,17 @@ b) Copy zxfer.8.gz to /usr/local/man/man8
 
 ###FreeNAS
 
-As the freenas file system is not persistent for user changes, we will need to use a jail, give the jail access to the required datasets and install zxfer there.
-
-See the github WIKI for details on this, with screenshots (to be completed)- however basic steps are below for those capable.
+As the freenas file system is not persistent for user changes, we will need to;
 
 a) Create a standard jail via the freeness UI
 
 b) Add the datasets required for the transfer to the jail via the jails storage manager in the UI
 
 c) Use either the pkg or port methods above to install zxfer
+
+all instructions for the above can be found here
+
+http://doc.freenas.org/9.3/freenas_jails.html
 
 ###OpenSolaris, Solaris 11 Express:
 a) Copy zxfer to /usr/sfw/bin.
