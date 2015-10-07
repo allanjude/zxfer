@@ -21,7 +21,7 @@ Changes
 		-D 'bar -s %%size%% -bl 1m -bs 256m'
 + Ignore new read-only properties added in FreeBSD 9.1: 'written' and 'refcompressratio'
 + Ignore new read-only properties added in FreeBSD 9.2/8.4: 'logicalused' and 'logicalreferenced'
-+ "Unsupported Properties" support, do not copy properties that are unsupported by the destination pool. Allows replication from 11-CURRENT to 9.2 etc, by automatically ignoring new properties such as: volmode,filesystem_limit,snapshot_limit,filesystem_count,snapshot_count,redundant_metadata
++ "Unsupported Properties" support, do not copy properties that are unsupported by the destination pool. Allows replication from 11-CURRENT to 9.2 etc, by automatically ignoring new properties such as: volmode, filesystem_limit, snapshot_limit, filesystem_count, snapshot_count, redundant_metadata
 + Fixed -o mountpoint=foo , it is no longer ignored as readonly if explicitly requested by the user
 + Implemented new -I parameter, ignore these properties and do not try to set them
 
@@ -34,9 +34,8 @@ You will need to be root before starting.
 
 ##FreeBSD:
 
-###Via pkg (Recomended)
-	pkg update
-	pkg install sysutils/zxfer
+###Via pkg (Recommended)
+	pkg install zxfer
 
 
 ###Via Ports
