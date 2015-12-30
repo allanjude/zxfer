@@ -1300,6 +1300,10 @@ transfer_properties() {
     | tr "\t" "=" | tr "\n" ",")
   source_human_pvs=${source_human_pvs%,}
 
+  # Check if the source is a zvol, which requires some special handling
+  source_type=$($LZFS get -Hpo value type "$source")
+  source_volsize=$($LZFS get -Hpo value volsize "$source")
+
   # Some localizations (German, French) use a comma as a decimal separator which
   # changes the interpretation of the value on machines with a different
   # localization.  Some OSes (OS X) use odd units (Ki) instead of K, and the
@@ -1454,6 +1458,9 @@ $override_value=$override_source,"
       override_option_list=$(echo "$new_rmvs_pv" | sed -e 's/,/ -o /g')
       if [ "$override_option_list" != "" ]; then
         override_option_list=" -o $override_option_list"
+      fi
+      if [ $source_type == "volume" ]; then
+        override_option_list=" -V $source_volsize $override_option_list"
       fi
 
       # If not, create it with the override list and be done with it -
