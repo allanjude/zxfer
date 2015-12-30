@@ -1301,7 +1301,7 @@ transfer_properties() {
   source_human_pvs=${source_human_pvs%,}
 
   # Check if the source is a zvol, which requires some special handling
-  source_type=$($LZFS get -Hpo value type "$source")
+  source_dstype=$($LZFS get -Hpo value type "$source")
   source_volsize=$($LZFS get -Hpo value volsize "$source")
 
   # Some localizations (German, French) use a comma as a decimal separator which
@@ -1459,7 +1459,7 @@ $override_value=$override_source,"
       if [ "$override_option_list" != "" ]; then
         override_option_list=" -o $override_option_list"
       fi
-      if [ $source_type == "volume" ]; then
+      if [ "$source_dstype" == "volume" ]; then
         override_option_list=" -V $source_volsize $override_option_list"
       fi
 
@@ -1500,7 +1500,9 @@ $override_value=$override_source,"
       if [ "$creation_option_list" != "" ]; then
         creation_option_list=" -o $creation_option_list"
       fi
-
+      if [ "$source_dstype" == "volume" ]; then
+        creation_option_list=" -V $source_volsize $creation_option_list"
+      fi
 
       # revert to old field separator
       # (This and reversion back is so that $RZFS command works with -r)
