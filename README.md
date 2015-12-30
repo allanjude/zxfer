@@ -60,7 +60,7 @@ b) Copy zxfer.8.gz to /usr/local/man/man8
 
 As the freenas file system is not persistent for user changes, we will need to;
 
-a) Create a standard jail via the freeness UI
+a) Create a standard jail via the freenas UI
 
 b) Add the datasets required for the transfer to the jail via the jails storage manager in the UI
 
