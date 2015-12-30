@@ -1418,6 +1418,8 @@ $override_value=$override_source,"
       override_pvs="$override_pvs$override_property=$override_value=$override_source,"
       if [ "$creation_property" != "NULL" -a "$creation_source" = "local" ]; then
         creation_pvs="$creation_pvs$creation_property=$creation_value=$creation_source,"
+      elif [ "$source_dstype" = "volume" -a "$creation_property" = "refreservation" ]; then
+	creation_pvs="$creation_pvs$creation_property=$creation_value=$creation_source,"
       fi
     done
   fi
@@ -1459,14 +1461,14 @@ $override_value=$override_source,"
       if [ "$override_option_list" != "" ]; then
         override_option_list=" -o $override_option_list"
       fi
-      if [ "$source_dstype" == "volume" ]; then
+      if [ "$source_dstype" = "volume" ]; then
         override_option_list=" -V $source_volsize $override_option_list"
       fi
 
       # If not, create it with the override list and be done with it -
       # we have now transferred all properties
       echov "Creating destination filesystem \"$actual_dest\" \
-  with specified properties."
+with specified properties."
 
       # revert to old field separator
       # (This and reversion back is so that $RZFS command works with -r)
@@ -1500,7 +1502,7 @@ $override_value=$override_source,"
       if [ "$creation_option_list" != "" ]; then
         creation_option_list=" -o $creation_option_list"
       fi
-      if [ "$source_dstype" == "volume" ]; then
+      if [ "$source_dstype" = "volume" ]; then
         creation_option_list=" -V $source_volsize $creation_option_list"
       fi
 
