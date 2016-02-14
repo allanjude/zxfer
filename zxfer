@@ -628,8 +628,10 @@ grep ^$source@) > /dev/null 2>&1
     if [ $mark_snap_for_deletion = 1 -a $option_d -eq 1 ]; then
       echov "Destroying destination snapshot $dest_snap."
       if [ $option_n -eq 0 ]; then
+	# A failed destroy is not a critical error, it is likely caused by
+	# a hold or a clone. Continue with the replication
         $RZFS destroy "$dest_snap" || \
-          { echo "Error when zfs destroying."; exit 1; }
+          { echo "Error when zfs destroying."; }
       else
         echo "$RZFS destroy $dest_snap"
       fi
