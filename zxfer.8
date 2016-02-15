@@ -1,4 +1,5 @@
 .\"
+.\" Copyright (c) 2013-2016 Allan Jude <allanjude@freebsd.org>
 .\" Copyright (c) 2010, 2011 Ivan Nash Dreckman
 .\" Copyright (c) 2007, 2008 Constantin Gonzalez
 .\" All rights reserved.
@@ -23,18 +24,8 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"     zxfer [-dFnPsv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
-.\"           [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
-.\"           [-T user@host] [-o option1=value1,option2=value2...] [-g days]
-.\"           destination
-.\"     zxfer {-S} [-dilpPnv] [-k | -e] [-b | -B] [-f /path/to/rsfile]
-.\"           {-R /path/to/src1,path/to/src2... | -N /path/to/src1,path/to/src2...}
-.\"           [-o option1=value1,option2=value2...] [-E pattern] [-L value]
-.\"           [-u snapshot] destination
-.\"     zxfer [-h]
 .\"
-.\"           Where destination is a ZFS filesystem e.g.  poolname/fsname
-.Dd May 10, 2011
+.Dd Feb 14, 2016
 .Dt ZXFER 8
 .Os
 .Sh NAME
@@ -42,11 +33,13 @@
 .Nd "transfer ZFS filesystems, snapshots, properties, files and directories"
 .Sh SYNOPSIS
 .Nm
-.Op Fl dFnPsv
+.Op Fl dFnPsUv
 .Op Fl k | e
 .Op Fl b | B
 .Brq -N path/to/src | -R path/to/src 
 .Op Fl m Op Ar c "FMRI|pattern[ FMRI|pattern]...]" 
+.Op Fl D Ar 'progress dialog options'
+.Op Fl I Ar properties,to,ignore
 .Op Fl O Ar user@host
 .Op Fl T Ar user@host
 .Op Fl o Ar option1=value1,option2=value2...
@@ -389,6 +382,24 @@ of the destination. Requires -m.
 .It Fl d
 (d)elete snapshots on the destination that are absent on the source. This may
 be necessary to function properly anyway, in a similar fashion to
+.It Fl D
+.Nm
+will pipe
+.Xr zfs 8
+.Va send
+through the indicated command and parameters, to create a progress bar.
+A number of macros will be replaced with values before the command is executed:
+.Bl -tag -width a
+.It %%size%%
+Will be replaced with the estimated size of the snapshot.
+.It %%title%%
+Will be replaced with the name of the source dataset@snapshot.
+.El
+.Pp
+Example:
+.Pp
+.Nm
+.Fl O Ar user@host Fl D Ar 'bar -s %%size%%' Fl R Ar source destination
 .Op Fl F .
 This will occur if you are using
 .Nm
@@ -429,6 +440,10 @@ kept for a period of a year or less. This gives us 9 days of grace period
 to make a backup without throwing an error, but do note that during 
 this grace period grandfathers
 less than 375 days old are not protected.
+.It Fl I Ar properties,to,ignore
+Do not copy this comma separated list of properties when performing replication.
+Useful for skipping properties like quotas that can interfere with replication,
+or properties that are not supported on the destination.
 .It Fl m
 After sending all snapshots, (m)igrate the source to the destination filesystem by
 unmounting the source filesystem and changing the new filesystem's
@@ -566,6 +581,12 @@ Again, please note that if you are using Solaris, you will most likely need to u
 quotes and spacing exactly:
 .Pp 
 e.g. -T "user1@192.168.0.1 pfexec"
+.It Fl U
+Skip replicating any properties that are not supported by the destination.
+Before replication begins, a list of supported properties is fetched from the
+destination and any properties not on that list are removed from the list of
+properties to be replicated.
+This allows replicating from newer versions of OpenZFS to older versions.
 .El
 .Ss Rsync mode 
 (i.e. -S is specified)
