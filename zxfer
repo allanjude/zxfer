@@ -80,7 +80,7 @@
 # set to local. This does not have any real impacts because these properties
 # are not inheritable. See definition for $fbsd_readonly_properties. 
 #
-#     zxfer [-dFnPsv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
+#     zxfer [-dFnPsUv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
 #           [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
 #           [-D 'progress dialog options'] [-I properties,to,ignore]
 #           [-T user@host] [-o option1=value1,option2=value2...] [-g days]
@@ -123,6 +123,7 @@ option_S=0
 option_s=0
 option_T=""
 option_u=0
+option_U=0
 option_v=0
 exit_status=1 # defaults to failure
 
@@ -255,7 +256,7 @@ init_variables() {
 usage() {
 cat <<EOT
 usage: 
-     zxfer [-dFnPsv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
+     zxfer [-dFnPsUv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
            [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
            [-D 'progress dialog options'] [-I properties,to,ignore]
            [-T user@host] [-o option1=value1,option2=value2...] [-g days]
@@ -1868,7 +1869,7 @@ $backup_file_dir/$backup_file_extension.$is_tail\" | $option_T sh"
 #
 
 # Read command line switches
-while getopts bBc:deE:f:Fg:hiklL:lmnN:o:O:pPPR:sST:u:v?:D: i
+while getopts bBc:deE:f:Fg:hiklL:lmnN:o:O:pPPR:sST:u:Uv?:D: i
 do
   case $i in
     b)
@@ -1963,6 +1964,9 @@ do
     u)
       option_u=1
       snapshot_name="$OPTARG"
+      ;;
+    U)
+      option_U=1
       ;;
     v)
       option_v=1
@@ -2196,7 +2200,9 @@ else
     get_backup_properties
   fi
 
-  calculate_unsupported_properties
+  if [ $option_U -eq 1 ]; then
+    calculate_unsupported_properties
+  fi
 
   # If recursive option is not selected, then we only iterate once through 
   # the initial source as source
