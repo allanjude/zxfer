@@ -677,9 +677,9 @@ get_zfs_list() {
   initial_source=${initial_source%/}
 
   rzfs_list_ho_s=$($RZFS list -t filesystem,volume -Ho name -s creation) ||
-    { echo "Failed to retrieve datasets from the destination"; exit 2 }
+    { echo "Failed to retrieve datasets from the destination"; exit 3; }
   lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot) ||
-    { echo "Failed to retrieve snapshots from the source"; exit 2 }
+    { echo "Failed to retrieve snapshots from the source"; exit 3; }
   # Note that for OpenSolaris compatibility, instead of using gtac
   # we will use ...| cat -n | sort -nr | cut -c 8-
   # gtac line
@@ -689,13 +689,13 @@ get_zfs_list() {
     rzfs_list_hr_S_snap=$lzfs_list_hr_S_snap
   else
     rzfs_list_hr_S_snap=$($RZFS list -Hr -o name -S creation -t snapshot) ||
-      { echo "Failed to retrieve snapshots from the destination"; exit 2 }
+      { echo "Failed to retrieve snapshots from the destination"; exit 3; }
   fi
 
   recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name "$initial_source") ||
-    { echo "Failed to retrieve list of datasets from the source"; exit 2 }
+    { echo "Failed to retrieve list of datasets from the source"; exit 3; }
   recursive_dest_list=$($RZFS list -t filesystem,volume -Hr -o name "$destination") ||
-    { echo "Failed to retrieve list of datasets from the destination"; exit 2 }
+    { echo "Failed to retrieve list of datasets from the destination"; exit 3; }
 
   # Exit if source not sound
   if [ "$recursive_source_list" = "" ]; then
