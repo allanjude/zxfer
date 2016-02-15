@@ -1,7 +1,7 @@
 #!/bin/sh
 # BSD HEADER START
 
-# Copyright (c) 2013-2014 Allan Jude <allanjude@freebsd.org>
+# Copyright (c) 2013-2016 Allan Jude <allanjude@freebsd.org>
 # Copyright (c) 2010,2011 Ivan Nash Dreckman
 # Copyright (c) 2007, 2008 Constantin Gonzalez
 # All rights reserved.
@@ -94,7 +94,7 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="1.1.3-20140721"
+zxfer_version="1.1.5-20160214"
 
 # Default values
 option_b=0
