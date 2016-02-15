@@ -94,7 +94,7 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="1.1.5-20160214"
+zxfer_version="1.1.6-20160214"
 
 # Default values
 option_b=0
