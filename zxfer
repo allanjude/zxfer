@@ -1465,7 +1465,7 @@ $override_value=$override_source,"
       # as this is the initial source, we want to transfer all properties from
       # the source, overridden with option_o values as necessary 
       remove_sources "$override_pvs"
-      override_option_list=$(echo "$new_rmvs_pv" | sed -e 's/,/ -o /g')
+      override_option_list=$(echo "$new_rmvs_pv" | tr "," "\n" | sed "s/\(.*\)=\(.*\)/\1=\'\2\'/g" | tr "\n" "," | sed 's/,$//' | sed -e 's/,/ -o /g')
       if [ "$override_option_list" != "" ]; then
         override_option_list=" -o $override_option_list"
       fi
@@ -1505,7 +1505,7 @@ with specified properties."
       creation_pvs="$new_rmv_pvs"
 
       remove_sources "$creation_pvs"
-      creation_option_list=$(echo "$new_rmvs_pv" | sed -e 's/,/ -o /g')
+      creation_option_list=$(echo "$new_rmvs_pv" | tr "," "\n" | sed "s/\(.*\)=\(.*\)/\1=\'\2\'/" | tr "\n" "," | sed 's/,$//' | sed -e 's/,/ -o /g')
 
       if [ "$creation_option_list" != "" ]; then
         creation_option_list=" -o $creation_option_list"
