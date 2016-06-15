@@ -1869,7 +1869,7 @@ $backup_file_dir/$backup_file_extension.$is_tail\" | $option_T sh"
 #
 
 # Read command line switches
-while getopts bBc:deE:f:Fg:hiklL:lmnN:o:O:pPPR:sST:u:Uv?:D: i
+while getopts bBc:deE:f:Fg:hiI:klL:lmnN:o:O:pPPR:sST:u:Uv?:D: i
 do
   case $i in
     b)
@@ -1911,6 +1911,9 @@ do
       ;;
     i)
       option_i=1
+      ;;
+    I)
+      option_I="$OPTARG"
       ;;
     k)
       option_k=1
