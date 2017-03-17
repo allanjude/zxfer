@@ -678,7 +678,7 @@ get_zfs_list() {
 
   rzfs_list_ho_s=$($RZFS list -t filesystem,volume -Ho name -s creation) ||
     { echo "Failed to retrieve datasets from the destination"; exit 3; }
-  lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot $destination) ||
+  lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot $initial_source) ||
     { echo "Failed to retrieve snapshots from the source"; exit 3; }
   # Note that for OpenSolaris compatibility, instead of using gtac
   # we will use ...| cat -n | sort -nr | cut -c 8-
