@@ -26,21 +26,21 @@ Changes
 + Implemented new -I parameter, ignore these properties and do not try to set them
 + Implemented new -U parameter, do not try to replicate unsupported properties, to skip properties that the destination does not understand
 
-#Installation
+# Installation
 
 
 You will need to be root before starting.
 
 	$ su
 
-##FreeBSD:
+## FreeBSD:
 
-###Via pkg (Recommended)
+### Via pkg (Recommended)
 	pkg install zxfer
 
 
-###Via Ports
-####Auto
+### Via Ports
+#### Auto
 
 a) Go to ports directory.
 
@@ -48,7 +48,7 @@ a) Go to ports directory.
 b) Install
 
 	# make install
-#####Manual
+##### Manual
 Here are the directions for those who want to do it manually.
 a) Copy zxfer to /usr/local/sbin.
 
@@ -57,7 +57,7 @@ b) Copy zxfer.8.gz to /usr/local/man/man8
 
 	# cp zxfer.8.gz /usr/local/man/man8
 
-###FreeNAS
+### FreeNAS
 
 As the freenas file system is not persistent for user changes, we will need to;
 
@@ -71,7 +71,7 @@ all instructions for the above can be found here
 
 http://doc.freenas.org/9.3/freenas_jails.html
 
-###OpenSolaris, Solaris 11 Express:
+### OpenSolaris, Solaris 11 Express:
 a) Copy zxfer to /usr/sfw/bin.
 
 	# cp zxfer /usr/sfw/bin
