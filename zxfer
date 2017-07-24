@@ -185,6 +185,9 @@ fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,xat
 # Properties not supported on Solaris Express 11
 solexp_readonly_properties="jailed,aclmode,shareiscsi"
 
+# Multiplicative Suffix for dd operations: defaults to 'm' as in 'dd bs=1m' for freebsd
+dd_mult_suffix="m"
+
 #
 # Beeps a success sound if -B enabled, and a failure sound if -b or -B enabled.
 # Takes: $exit_status (0 if success, 1 if failure)
@@ -246,6 +249,7 @@ init_variables() {
 
   if [ "$home_os" = "SunOS" ]; then
     AWK=$( which gawk )
+    dd_mult_suffix="M"
   fi
  }
 
@@ -409,7 +413,7 @@ copy_snap() {
           echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo "$option_D" | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send "$copysrc" | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG | \
+          $LZFS send "$copysrc" | dd obs=1"$dd_mult_suffix" | dd bs=1"$dd_mult_suffix" | $PROGRESS_DIALOG | \
             $RZFS receive $option_F "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
@@ -420,7 +424,7 @@ copy_snap() {
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
           $LZFS send -nv "$copysrc"
-          echo "$LZFS send $copysrc | dd obs=1m | dd bs=1m | $PROGRESS_DIALOG |
+          echo "$LZFS send $copysrc | dd obs=1"$dd_mult_suffix" | dd bs=1"$dd_mult_suffix" | $PROGRESS_DIALOG |
             $RZFS receive $option_F $copydest"
         fi
       else
@@ -441,7 +445,7 @@ copy_snap() {
           echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send -i "$copyprev" "$copysrc" | dd obs=1m | dd bs=1m | \
+          $LZFS send -i "$copyprev" "$copysrc" | dd obs=1"$dd_mult_suffix" | dd bs=1"$dd_mult_suffix" | \
             $PROGRESS_DIALOG | $RZFS receive $option_F "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
@@ -452,7 +456,7 @@ copy_snap() {
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
           $LZFS send -nv -i "$copyprev" "$copysrc"
-          echo "$LZFS send -i $copyprev $copysrc | dd obs=1m | dd bs=1m | \
+          echo "$LZFS send -i $copyprev $copysrc | dd obs=1"$dd_mult_suffix" | dd bs=1"$dd_mult_suffix" | \
             $PROGRESS_DIALOG | $RZFS receive $option_F $copydest"      
         fi
       else
