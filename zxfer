@@ -241,12 +241,12 @@ init_variables() {
   get_os "$option_T"
   dest_os="$output_os"
   # Stupid way to detect if FreeBSD 10 through 19
-  dest_osver=(printf %.1s "$output_osver")
+  dest_osver=$(printf %.1s "$output_osver")
   
   get_os "$option_O"
   source_os="$output_os"
   # Stupid way to detect if FreeBSD 10 through 19
-  source_osver=(printf %.1s "$output_osver")
+  source_osver=$(printf %.1s "$output_osver")
   
   if [ $option_e -eq 1 ]; then
     LCAT=$( ${option_O} which cat )
@@ -1444,15 +1444,14 @@ $override_value=$override_source,"
     done
   fi
 
-  =$(printf %.1s "$1")
-
-  # Remove several properties not supported on FreeBSD.
+    # Remove several properties not supported on FreeBSD.
   # Basic check for FreeBSD 10 through 19... :P
-  if [ "$dest_os" = "FreeBSD" -a "$dest_osver" = "1"]; then
+  if [ "$dest_os" = "FreeBSD" -a "$dest_osver" = "1" ]; then
     readonly_properties="$readonly_properties,$fbsd11_readonly_properties"
   # Assume is FreeBSD 9 or earlier
-  else if [ "$dest_os" = "FreeBSD" ]; then
-    readonly_properties="$readonly_properties,$fbsd_readonly_properties"
+    else if [ "$dest_os" = "FreeBSD" ]; then
+      readonly_properties="$readonly_properties,$fbsd_readonly_properties"
+    fi
   fi
 
   # Remove several properties not supported on Solaris Express.
@@ -1463,6 +1462,7 @@ $override_value=$override_source,"
   # Remove several properties not supported on Linux.
   if [ "$dest_os" = "Linux" ]; then
     readonly_properties="$readonly_properties,$linux_readonly_properties"
+  fi
 
   # Remove the readonly properties and values.
   remove_properties "$override_pvs" "$readonly_properties"
