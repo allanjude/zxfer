@@ -180,10 +180,10 @@ refcompressratio,written,logicalused,logicalreferenced"
 
 
 # Properties not supported on FreeBSD 9.3
-fbsd_readonly_properties="aclmode,aclinherit,acltype,devices,nbmand,shareiscsi,snapdev,vscan,xattr,zoned"
+fbsd_readonly_properties="aclmode,aclinherit,acltype,context,defcontext,devices,fscontext,nbmand,overlay,relatime,rootcontext,shareiscsi,snapdev,vscan,xattr,zoned"
 
 # Properties not supported on FreeBSD 10+
-fbsd11_readonly_properties="acltype,devices,nbmand,shareiscsi,snapdev,vscan,xattr,zoned"
+fbsd11_readonly_properties="acltype,context,defcontext,defcontext,devices,fscontext,overlay,nbmand,relatime,rootcontext,shareiscsi,snapdev,vscan,xattr,zoned"
 
 # Properties not supported on Solaris Express 11
 solexp_readonly_properties="jailed,aclmode,shareiscsi"
@@ -227,6 +227,7 @@ get_os() {
   # Get uname of the destination (target) machine, local or remote 
   if [ "$input_optionts" = "" ]; then
     output_os=$(uname)
+    # Attempt to get OS version for FreeBSD 10 or greater - BROKEN
     output_osver=$(uname -r)
   else 
     output_os=$($input_optionts uname)
@@ -240,7 +241,7 @@ get_os() {
 init_variables() {
   get_os "$option_T"
   dest_os="$output_os"
-  # Stupid way to detect if FreeBSD 10 through 19
+  # Stupid way to detect if FreeBSD 10 through 19 - BROKEN
   dest_osver=$(printf %.1s "$output_osver")
   
   get_os "$option_O"
@@ -1445,7 +1446,7 @@ $override_value=$override_source,"
   fi
 
     # Remove several properties not supported on FreeBSD.
-  # Basic check for FreeBSD 10 through 19... :P
+  # Basic check for FreeBSD 10 through 19... 
   if [ "$dest_os" = "FreeBSD" -a "$dest_osver" = "1" ]; then
     readonly_properties="$readonly_properties,$fbsd11_readonly_properties"
   # Assume is FreeBSD 9 or earlier
