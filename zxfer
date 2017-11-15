@@ -180,16 +180,16 @@ refcompressratio,written,logicalused,logicalreferenced"
 
 
 # Properties not supported on FreeBSD 9.3
-fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,snapdev,vscan,xattr,zoned"
+fbsd_readonly_properties="aclmode,aclinherit,acltype,devices,nbmand,shareiscsi,snapdev,vscan,xattr,zoned"
 
 # Properties not supported on FreeBSD 10+
-fbsd11_readonly_properties="devices,nbmand,shareiscsi,snapdev,vscan,xattr,zoned"
+fbsd11_readonly_properties="acltype,devices,nbmand,shareiscsi,snapdev,vscan,xattr,zoned"
 
 # Properties not supported on Solaris Express 11
 solexp_readonly_properties="jailed,aclmode,shareiscsi"
 
 # Properties not support on Linux
-linux_readonly_properties="jailed,aclmode,acltype,shareiscsi,volmode"
+linux_readonly_properties="jailed,aclmode,shareiscsi,volmode"
 
 #
 # Beeps a success sound if -B enabled, and a failure sound if -b or -B enabled.
