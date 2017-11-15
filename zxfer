@@ -94,7 +94,7 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="1.1.7-20171107"
+zxfer_version="1.1.7-20171115"
 
 # Default values
 option_b=0
@@ -189,7 +189,7 @@ fbsd11_readonly_properties="devices,nbmand,shareiscsi,snapdev,vscan,xattr,zoned"
 solexp_readonly_properties="jailed,aclmode,shareiscsi"
 
 # Properties not support on Linux
-linux_readonly_properties="jailed,aclmode,shareiscsi,volmode"
+linux_readonly_properties="jailed,aclmode,acltype,shareiscsi,volmode"
 
 #
 # Beeps a success sound if -B enabled, and a failure sound if -b or -B enabled.
