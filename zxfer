@@ -685,12 +685,8 @@ get_zfs_list() {
   # gtac line
   lzfs_list_hr_S_snap=$(echo "$lzfs_list_hr_s_snap" | cat -n)
   lzfs_list_hr_S_snap=$(echo "$lzfs_list_hr_S_snap" | sort -nr | cut -c 8- )
-  if [ "$RZFS" = "$LZFS" ]; then
-    rzfs_list_hr_S_snap=$lzfs_list_hr_S_snap
-  else
-    rzfs_list_hr_S_snap=$($RZFS list -Hr -o name -S creation -t snapshot $destination) ||
-      { echo "Failed to retrieve snapshots from the destination"; exit 3; }
-  fi
+  rzfs_list_hr_S_snap=$($RZFS list -Hr -o name -S creation -t snapshot $destination) ||
+    { echo "Failed to retrieve snapshots from the destination"; exit 3; }
 
   recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name "$initial_source") ||
     { echo "Failed to retrieve list of datasets from the source"; exit 3; }
