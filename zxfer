@@ -94,7 +94,7 @@
 #           Where destination is a ZFS filesystem e.g.  poolname/fsname
 
 # zxfer version
-zxfer_version="1.1.6-20160214"
+zxfer_version="1.1.7-20171115"
 
 # Default values
 option_b=0
@@ -180,10 +180,16 @@ refcompressratio,written,logicalused,logicalreferenced,createtxg,guid"
 
 
 # Properties not supported on FreeBSD 9.3
-fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,xattr"
+fbsd_readonly_properties="aclmode,aclinherit,acltype,context,defcontext,devices,fscontext,nbmand,overlay,relatime,rootcontext,shareiscsi,snapdev,vscan,xattr,zoned"
+
+# Properties not supported on FreeBSD 10+
+fbsd11_readonly_properties="acltype,context,defcontext,defcontext,devices,fscontext,overlay,nbmand,relatime,rootcontext,shareiscsi,snapdev,vscan,xattr,zoned"
 
 # Properties not supported on Solaris Express 11
 solexp_readonly_properties="jailed,aclmode,shareiscsi"
+
+# Properties not support on Linux
+linux_readonly_properties="jailed,aclmode,shareiscsi,volmode"
 
 #
 # Beeps a success sound if -B enabled, and a failure sound if -b or -B enabled.
@@ -216,10 +222,13 @@ fi
 get_os() {
   input_optionts=$1
   output_os=""
+  output_osver=""
 
   # Get uname of the destination (target) machine, local or remote 
   if [ "$input_optionts" = "" ]; then
     output_os=$(uname)
+    # Attempt to get OS version for FreeBSD 10 or greater - BROKEN
+    output_osver=$(uname -r)
   else 
     output_os=$($input_optionts uname)
   fi
@@ -232,9 +241,13 @@ get_os() {
 init_variables() {
   get_os "$option_T"
   dest_os="$output_os"
+  # Stupid way to detect if FreeBSD 10 through 19 - BROKEN
+  dest_osver=$(printf %.1s "$output_osver")
   
   get_os "$option_O"
   source_os="$output_os"
+  # Stupid way to detect if FreeBSD 10 through 19
+  source_osver=$(printf %.1s "$output_osver")
   
   if [ $option_e -eq 1 ]; then
     LCAT=$( ${option_O} which cat )
@@ -1428,14 +1441,24 @@ $override_value=$override_source,"
     done
   fi
 
-  # Remove several properties not supported on FreeBSD.
-  if [ "$dest_os" = "FreeBSD" ]; then
-    readonly_properties="$readonly_properties,$fbsd_readonly_properties"
+    # Remove several properties not supported on FreeBSD.
+  # Basic check for FreeBSD 10 through 19... 
+  if [ "$dest_os" = "FreeBSD" -a "$dest_osver" = "1" ]; then
+    readonly_properties="$readonly_properties,$fbsd11_readonly_properties"
+  # Assume is FreeBSD 9 or earlier
+    else if [ "$dest_os" = "FreeBSD" ]; then
+      readonly_properties="$readonly_properties,$fbsd_readonly_properties"
+    fi
   fi
 
   # Remove several properties not supported on Solaris Express.
   if [ "$dest_os" = "SunOS" -a "$source_os" = "FreeBSD" ]; then
     readonly_properties="$readonly_properties,$solexp_readonly_properties"
+  fi
+
+  # Remove several properties not supported on Linux.
+  if [ "$dest_os" = "Linux" ]; then
+    readonly_properties="$readonly_properties,$linux_readonly_properties"
   fi
 
   # Remove the readonly properties and values.
