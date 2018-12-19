@@ -176,7 +176,7 @@ readonly_properties="type,creation,used,available,referenced,\
 compressratio,mounted,version,primarycache,secondarycache,\
 usedbysnapshots,usedbydataset,usedbychildren,usedbyrefreservation,\
 version,volsize,mountpoint,mlslabel,keysource,keystatus,rekeydate,encryption,\
-refcompressratio,written,logicalused,logicalreferenced"
+refcompressratio,written,logicalused,logicalreferenced,createtxg,guid"
 
 
 # Properties not supported on FreeBSD 9.3
