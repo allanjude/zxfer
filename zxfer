@@ -178,7 +178,7 @@ usedbysnapshots,usedbydataset,usedbychildren,usedbyrefreservation,\
 version,volsize,mountpoint,mlslabel,keysource,keystatus,rekeydate,encryption,\
 refcompressratio,written,logicalused,logicalreferenced,createtxg,guid,origin,\
 filesystem_count,snapshot_count,clones,defer_destroy,receive_resume_token,\
-userrefs"
+userrefs,objsetid"
 
 # Properties not supported on FreeBSD
 fbsd_readonly_properties="aclmode,aclinherit,devices,nbmand,shareiscsi,vscan,\
