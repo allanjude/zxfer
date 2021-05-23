@@ -389,7 +389,7 @@ consistency_check() {
     fi
   
     # disallow -w with -P, else zfs receive won't work
-    if [ $option_w -eq 1 -a $option_U -eq 1 ]; then
+    if [ $option_w -eq 1 -a $option_P -eq 1 ]; then
       echo "Error: -w (raw send) option cannot be used with -P"
       usage
       exit 1
