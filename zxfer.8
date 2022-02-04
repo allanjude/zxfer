@@ -409,6 +409,14 @@ often gets deleted on the source. Any snapshots on the destination more
 recent than the most recent common snapshot must be deleted for
 .Cm zfs send
 to work.
+.It Fl E
+(E)xclude specified datasets from source list. e.g. if you want to exclude
+some datasets from receiving list, then use "-E mypool/exclude1,mypool/exclude2".
+You must to use this option one time and specify all exclusions comma separated.
+You can use only name dataset without full path with pool name etc,
+but in this case you will exclude all datasets, that includes this name.
+e.g. "-E exclude" will excluding and mypool/exclude, and mypool/path/to/exclude2.
+When you specified some dataset for exclusion, you also exclude all them childs.
 .It Fl g
 (g)randfather protection. Specify a number of days old (relative to the system
 date) at and above which snapshots on the destination won't be deleted. For use
