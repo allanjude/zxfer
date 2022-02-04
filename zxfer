@@ -665,7 +665,7 @@ grep ^$source@) > /dev/null 2>&1
 get_zfs_list() {
 
   if [ "$option_E" != "" ]; then    # add user-specified exclude patterns.
-    zfs_list_exclude=$(echo "-e $option_E" | sed -e "s/\,/ -e /g" | sed -e "s/--exclude=//g")
+    zfs_list_exclude=$(echo "-v -e $option_E" | sed -e "s/\,/ -e /g" | sed -e "s/--exclude=//g")
   fi
 
   # 0 if not a trailing slash;  regex is one character of any sort followed by
@@ -684,8 +684,12 @@ get_zfs_list() {
 
   rzfs_list_ho_s=$($RZFS list -t filesystem,volume -Ho name -s creation) ||
     { echo "Failed to retrieve datasets from the destination"; exit 3; }
-  lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot $initial_source | grep -v $zfs_list_exclude) ||
+  if [ "$option_E" != "" ]; then
+    lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot $initial_source | grep $zfs_list_exclude) ||
     { echo "Failed to retrieve snapshots from the source"; exit 3; }
+    else lzfs_list_hr_s_snap=$($LZFS list -Hr -o name -s creation -t snapshot $initial_source) ||
+    { echo "Failed to retrieve snapshots from the source"; exit 3; }
+  fi
   # Note that for OpenSolaris compatibility, instead of using gtac
   # we will use ...| cat -n | sort -nr | cut -c 8-
   # gtac line
@@ -694,8 +698,12 @@ get_zfs_list() {
   rzfs_list_hr_S_snap=$($RZFS list -Hr -o name -S creation -t snapshot $destination) ||
     { echo "Failed to retrieve snapshots from the destination"; exit 3; }
 
-  recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name "$initial_source" | grep -v $zfs_list_exclude) ||
+  if [ "$option_E" != "" ]; then
+    recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name "$initial_source" | grep $zfs_list_exclude) ||
     { echo "Failed to retrieve list of datasets from the source"; exit 3; }
+    else recursive_source_list=$($LZFS list -t filesystem,volume -Hr -o name "$initial_source") ||
+    { echo "Failed to retrieve list of datasets from the source"; exit 3; }
+  fi
   recursive_dest_list=$($RZFS list -t filesystem,volume -Hr -o name "$destination") ||
     { echo "Failed to retrieve list of datasets from the destination"; exit 3; }
 
