@@ -125,6 +125,9 @@ option_T=""
 option_u=0
 option_U=0
 option_v=0
+option_w=0
+option_z=""
+option_Z=""
 exit_status=1 # defaults to failure
 
 services=""
@@ -258,7 +261,7 @@ init_variables() {
 usage() {
 cat <<EOT
 usage: 
-     zxfer [-dFnPsUv] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
+     zxfer [-dFnPsUvw] [-k | -e] [-b | -B] {-N path/to/src | -R path/to/src}
            [-m [c FMRI|pattern[ FMRI|pattern]...]]] [-O user@host]
            [-D 'progress dialog options'] [-I properties,to,ignore]
            [-T user@host] [-o option1=value1,option2=value2...] [-g days]
@@ -357,7 +360,25 @@ consistency_check() {
       usage
       exit 1
     fi
-  
+
+    if [ $option_w -eq 1 ]; then
+      echo "Error: -w option cannot be used with -S (rsync mode)"
+      usage
+      exit 1
+    fi
+
+    if [ "$option_z" != "" ]; then
+      echo "Error: -z option cannot be used with -S (rsync mode)"
+      usage
+      exit 1
+    fi
+
+    if [ "$option_Z" != "" ]; then
+      echo "Error: -Z option cannot be used with -S (rsync mode)"
+      usage
+      exit 1
+    fi
+
   else
     #zfs send mode
   
@@ -373,7 +394,21 @@ consistency_check() {
       usage
       exit 1
     fi
+
+    # disallow -w with -U, else zfs receive won't work
+    if [ $option_w -eq 1 -a $option_U -eq 1 ]; then
+      echo "Error: -w (raw send) option cannot be used with -U"
+      usage
+      exit 1
+    fi
   
+    # disallow -w with -P, else zfs receive won't work
+    if [ $option_w -eq 1 -a $option_P -eq 1 ]; then
+      echo "Error: -w (raw send) option cannot be used with -P"
+      usage
+      exit 1
+    fi
+
     # disallow migration related options and remote transfers at same time
     if [ "$option_T" != "" -o "$option_O" != "" ]; then
       if [ $option_m -eq 1 -o "$services" != "" ]; then
@@ -399,6 +434,11 @@ copy_snap() {
   copydest=$dest
   copyprev=$lastsnap
   copysrctail=$( echo "$copysrc" | cut -d/ -f2- )
+  zfssend_flags="$option_z"
+  if [ $option_w -eq 1 ]; then
+    zfssend_flags="${zfssend_flags} -w"
+  fi
+  zfsreceive_flags="$option_Z $option_F"
 
   if [ -z "$( echo "$rzfs_list_ho_s" | grep "^$dest/$copysrctail" )" ]; then
     echov "Sending $copysrc to $copydest."
@@ -411,8 +451,8 @@ copy_snap() {
           echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo "$option_D" | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send "$copysrc" | dd obs=1048576 | dd bs=1048576 | $PROGRESS_DIALOG | \
-            $RZFS receive $option_F "$copydest" || \
+          $LZFS send $zfssend_flags "$copysrc" | dd obs=1048576 | dd bs=1048576 | $PROGRESS_DIALOG | \
+            $RZFS receive $zfsreceive_flags "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
           SIZE_DATASET=$( $LZFS send -nPv "$copysrc" 2>&1 ) ||
@@ -421,16 +461,16 @@ copy_snap() {
           echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send -nv "$copysrc"
-          echo "$LZFS send $copysrc | dd obs=1048576 | dd bs=1048576 | $PROGRESS_DIALOG |
-            $RZFS receive $option_F $copydest"
+          $LZFS send $zfssend_flags -nv "$copysrc"
+          echo "$LZFS send $zfssend_flags $copysrc | dd obs=1048576 | dd bs=1048576 | $PROGRESS_DIALOG |
+            $RZFS receive $zfsreceive_flags $copydest"
         fi
       else
         if [ $option_n -eq 0 ]; then
-          $LZFS send "$copysrc" | $RZFS receive $option_F "$copydest" || \
+          $LZFS send $zfssend_flags "$copysrc" | $RZFS receive $zfsreceive_flags "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }        
         else
-          echo "$LZFS send $copysrc | $RZFS receive $option_F $copydest"
+          echo "$LZFS send $zfssend_flags $copysrc | $RZFS receive $zfsreceive_flags $copydest"
         fi
       fi
     else
@@ -443,8 +483,8 @@ copy_snap() {
           echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send -i "$copyprev" "$copysrc" | dd obs=1048576 | dd bs=1048576 | \
-            $PROGRESS_DIALOG | $RZFS receive $option_F "$copydest" || \
+          $LZFS send $zfssend_flags -i "$copyprev" "$copysrc" | dd obs=1048576 | dd bs=1048576 | \
+            $PROGRESS_DIALOG | $RZFS receive $zfsreceive_flags "$copydest" || \
             { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
           SIZE_DATASET=$( $LZFS send -nPv -i "$copyprev" "$copysrc" 2>&1 ) ||
@@ -453,16 +493,16 @@ copy_snap() {
           echo "Estimated size is: ${SIZE_EST}"
           PROGRESS_DIALOG=$( echo $option_D | sed "s#%%size%%#$SIZE_EST#g" | \
             sed "s#%%title%%#$copysrc#g" )
-          $LZFS send -nv -i "$copyprev" "$copysrc"
-          echo "$LZFS send -i $copyprev $copysrc | dd obs=1048576 | dd bs=1048576 | \
-            $PROGRESS_DIALOG | $RZFS receive $option_F $copydest"      
+          $LZFS send $zfssend_flags -nv -i "$copyprev" "$copysrc"
+          echo "$LZFS send $zfssend_flags -i $copyprev $copysrc | dd obs=1048576 | dd bs=1048576 | \
+            $PROGRESS_DIALOG | $RZFS receive $zfsreceive_flags $copydest"
         fi
       else
         if [ $option_n -eq 0 ]; then
-          $LZFS send -i "$copyprev" "$copysrc" | $RZFS receive $option_F "$copydest" \
+          $LZFS send $zfssend_flags -i "$copyprev" "$copysrc" | $RZFS receive $zfsreceive_flags "$copydest" \
             || { echo "Error when zfs send/receiving."; beep; exit 1; }
         else
-          echo "$LZFS send -i $copyprev $copysrc | $RZFS receive $option_F
+          echo "$LZFS send $zfssend_flags -i $copyprev $copysrc | $RZFS receive $zfsreceive_flags
             $copydest"
         fi
       fi
@@ -1867,7 +1907,7 @@ $backup_file_dir/$backup_file_extension.$is_tail\" | $option_T sh"
 #
 
 # Read command line switches
-while getopts bBc:deE:f:Fg:hiI:klL:lmnN:o:O:pPPR:sST:u:Uv?:D: i
+while getopts bBc:deE:f:Fg:hiI:klL:lmnN:o:O:pPPR:sST:u:Uvw?:D:z:Z: i
 do
   case $i in
     b)
@@ -1971,6 +2011,15 @@ do
       ;;
     v)
       option_v=1
+      ;;
+    w)
+      option_w=1
+      ;;
+    z)
+      option_z="$OPTARG"
+      ;;
+    Z)
+      option_Z="$OPTARG"
       ;;
     \?)
       usage
