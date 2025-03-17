@@ -616,7 +616,7 @@ grep ^$source@) > /dev/null 2>&1
 
         # since the snap was matched, let's not waste our time searching for 
 	# it again
-        zfs_source_snaps=$(echo "$zfs_source_snaps" | grep -v "$src_snap")
+        zfs_source_snaps=$(echo "$zfs_source_snaps" | grep -v "$src_snap"$)
 
         # let's also break out of the loop, since we've already found what we 
 	# are looking for
