@@ -351,6 +351,7 @@ they are:
 If using -S, all filesystems in the pools containing the source directories/files 
 will be created on the destination if they aren't in existence already, whether
 they are to hold files/directories or not.
+This option is not compatible with -w.
 .It Fl S
 .Xr rsync 1 
 mode. 
@@ -595,6 +596,15 @@ Before replication begins, a list of supported properties is fetched from the
 destination and any properties not on that list are removed from the list of
 properties to be replicated.
 This allows replicating from newer versions of OpenZFS to older versions.
+This flag is incompatible with -w.
+.It Fl w
+Use the -w, --raw flag for zfs send. This enables sending encrypted datasets
+exactly as they exist on disk. This allows backups to be taken even if
+encryption keys are not loaded in the destination.
+This cannot be used after a non-raw send has been previously performed.
+This flag is incompatible with -U and -P.
+See also 
+.Xr zfs-send 8 .
 .El
 .Ss Rsync mode 
 (i.e. -S is specified)
